@@ -12,7 +12,7 @@ plugins {
 
 group = "it.pagopa.wallet"
 
-version = "0.0.1"
+version = "0.0.0"
 
 description = "pagopa-payment-wallet-scheduler-service"
 
@@ -74,6 +74,13 @@ springBoot {
 }
 
 tasks.withType<Test> { useJUnitPlatform() }
+
+tasks.create("applySemanticVersionPlugin") {
+  group = "semantic-versioning"
+  description = "Semantic versioning plugin"
+  dependsOn("prepareKotlinBuildScriptModel")
+  apply(plugin = "com.dipien.semantic-version")
+}
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
   kotlin {
