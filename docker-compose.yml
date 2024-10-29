@@ -1,0 +1,70 @@
+services:
+
+  pagopa-wallet-scheduler:
+    container_name: pagopa-wallet-scheduler-service
+    build:
+      dockerfile: Dockerfile
+      context: .
+    env_file:
+      - ./.env
+    ports:
+      - "8400:8080"
+    depends_on:
+      - mongodb
+    networks:
+      - pagopa-wallet-scheduler-net
+
+  mongo-express:
+    container_name: pagopa-wallet-scheduler-mongo-express
+    image: mongo-express@sha256:1b23d7976f0210dbec74045c209e52fbb26d29b2e873d6c6fa3d3f0ae32c2a64
+    env_file: docker-local/mongo/mongo-express.env
+    ports:
+      - "8401:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - pagopa-wallet-scheduler-net
+
+  mongodb:
+    container_name: pagopa-wallet-scheduler-mongodb
+    image: mongo:6@sha256:28bf77ff23511baafb3262d7e6f5ae3634e784662e147ef4f6950a07a43c5eab
+    env_file: docker-local/mongo/mongodb.env
+    ports:
+      - "28017:27017"
+    healthcheck:
+      test: echo "db.stats().ok" | mongo --quiet
+      interval: 10s
+    networks:
+      - pagopa-wallet-scheduler-net
+
+  storage:
+    image: mcr.microsoft.com/azure-storage/azurite:latest@sha256:d449d953a1c5bd1e26c800744a65c451e88f3387b696e02e3e2e79a995c3105b
+    container_name: pagopa-wallet-scheduler-azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - $PWD/.data:/opt/azurite/folder
+    networks:
+      - pagopa-wallet-scheduler-net
+
+  azurite-init:
+    container_name: pagopa-wallet-scheduler-azurite-init
+    build:
+      context: docker-local/azurite/
+      dockerfile: Dockerfile
+    depends_on:
+      - storage
+    environment:
+      QUEUE_CDC_WALLET: pagopa-wallet-cdc-queue
+    networks:
+      - pagopa-wallet-scheduler-net
+
+networks:
+  pagopa-wallet-scheduler-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.21.0.0/16
+          gateway: 10.21.0.1
