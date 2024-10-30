@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import it.pagopa.wallet.scheduler.common.cdc.WalletApplicationsUpdatedEvent
 import it.pagopa.wallet.scheduler.common.cdc.WalletDeletedEvent
 import it.pagopa.wallet.scheduler.common.cdc.WalletOnboardCompletedEvent
-import it.pagopa.wallet.scheduler.common.serialization.WalletEventMixin.Companion.WALLET_APPLICATIONS_UPDATE_TYPE
-import it.pagopa.wallet.scheduler.common.serialization.WalletEventMixin.Companion.WALLET_DELETED_TYPE
-import it.pagopa.wallet.scheduler.common.serialization.WalletEventMixin.Companion.WALLET_ONBOARD_COMPLETE_TYPE
+import it.pagopa.wallet.scheduler.common.serialization.LoggingEventMixin.Companion.WALLET_APPLICATIONS_UPDATE_TYPE
+import it.pagopa.wallet.scheduler.common.serialization.LoggingEventMixin.Companion.WALLET_DELETED_TYPE
+import it.pagopa.wallet.scheduler.common.serialization.LoggingEventMixin.Companion.WALLET_ONBOARD_COMPLETE_TYPE
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "_class")
 @JsonSubTypes(
@@ -22,7 +22,7 @@ import it.pagopa.wallet.scheduler.common.serialization.WalletEventMixin.Companio
         name = WALLET_APPLICATIONS_UPDATE_TYPE
     )
 )
-interface WalletEventMixin {
+interface LoggingEventMixin {
     @JsonProperty("_id") fun getId(): String?
     companion object {
         const val WALLET_APPLICATIONS_UPDATE_TYPE =
