@@ -101,6 +101,7 @@ org.junit.platform:junit-platform-engine:1.10.5=testRuntimeClasspath
 org.junit.platform:junit-platform-launcher:1.10.5=testRuntimeClasspath
 org.junit:junit-bom:5.10.5=testCompileClasspath,testImplementationDependenciesMetadata,testRuntimeClasspath
 org.latencyutils:LatencyUtils:2.0.3=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+org.mockito.kotlin:mockito-kotlin:5.4.0=testCompileClasspath,testImplementationDependenciesMetadata,testRuntimeClasspath
 org.mockito:mockito-core:5.11.0=testCompileClasspath,testImplementationDependenciesMetadata,testRuntimeClasspath
 org.mockito:mockito-junit-jupiter:5.11.0=testCompileClasspath,testImplementationDependenciesMetadata,testRuntimeClasspath
 org.mongodb:bson-record-codec:5.0.1=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath

@@ -61,6 +61,8 @@ If you want to customize the application environment, reference this table:
 | CDC_QUEUE_VISIBILITY_TIMEOUT_SECONDS | Visibility timeout in seconds for expired event                                                                                                            |                   |         |
 | CDC_SEND_RETRY_MAX_ATTEMPTS          | Max configurable attempts for performing the logic business related to a change event                                                                      | long              |         |
 | CDC_SEND_RETRY_INTERVAL_IN_MS        | Configurable interval in milliseconds between retries attempts                                                                                             | long              |         |
+| WALLET_SEARCH_STATUS                 | Wallet status search query for cdc injection                                                                                                               | string            |         |
+| WALLET_SEARCH_LIMIT                  | Wallet limit search query for cdc injection                                                                                                                | int               |         |
 
 (*): for Mongo connection string options
 see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/connection/connection-options/#connection-options)
