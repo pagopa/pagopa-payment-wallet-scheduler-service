@@ -8,8 +8,10 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document("payment-wallets")
 data class Wallet(
     @Id val id: String,
+    val userId: String,
     val status: String,
     val paymentMethodId: String,
+    val contractId: String?,
     val validationOperationResult: String?,
     val validationErrorCode: String?,
     val errorReason: String?,

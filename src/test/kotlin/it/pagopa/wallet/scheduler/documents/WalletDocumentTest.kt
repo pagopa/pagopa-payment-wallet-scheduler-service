@@ -18,9 +18,41 @@ class WalletDocumentTest {
         assertNull(wallet.validationOperationResult)
         assertNull(wallet.validationErrorCode)
         assertNull(wallet.errorReason)
+        assertNotNull(wallet.applications)
+        wallet.applications.forEach {
+            assertNotNull(it.id)
+            assertNotNull(it.status)
+            assertNotNull(it.creationDate)
+            assertNotNull(it.updateDate)
+            assertNotNull(it.metadata)
+        }
+        assertNotNull(wallet.details)
+        assertNotNull(wallet.clients)
+        wallet.clients.forEach {
+            assertNotNull(it.key)
+            assertNotNull(it.value.status)
+            assertNull(it.value.lastUsage)
+        }
         assertNotNull(wallet.version)
         assertNotNull(wallet.creationDate)
         assertNotNull(wallet.updateDate)
         assertNotNull(wallet.onboardingChannel)
+    }
+
+    @Test
+    fun `can build wallet details`() {
+
+        val payPalDetails = WalletTestUtils.paypalDetails()
+        assertNotNull(payPalDetails.maskedEmail)
+        assertNotNull(payPalDetails.pspId)
+        assertNotNull(payPalDetails.pspBusinessName)
+
+        val cardDetails = WalletTestUtils.cardDetails()
+        assertNotNull(cardDetails.type)
+        assertNotNull(cardDetails.bin)
+        assertNotNull(cardDetails.lastFourDigits)
+        assertNotNull(cardDetails.expiryDate)
+        assertNotNull(cardDetails.brand)
+        assertNotNull(cardDetails.paymentInstrumentGatewayId)
     }
 }
