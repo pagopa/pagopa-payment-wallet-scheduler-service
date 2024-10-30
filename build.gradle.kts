@@ -118,7 +118,7 @@ tasks.jacocoTestReport {
     files(
       classDirectories.files.map {
         fileTree(it).matching {
-          exclude("it/pagopa/wallet/PagopaPaymentWalletCdcServiceApplicationKt.class")
+          exclude("it/pagopa/wallet/PagopaPaymentWalletSchedulerServiceApplicationKt.class")
         }
       }
     )
