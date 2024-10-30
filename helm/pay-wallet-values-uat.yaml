@@ -98,8 +98,15 @@ microservice-chart:
     OTEL_METRICS_EXPORTER: otlp
     OTEL_LOGS_EXPORTER: otlp
     OTEL_TRACES_SAMPLER: "always_on"
+    SCHEDULER_CDC_QUEUE_NAME: pagopa-u-itn-pay-wallet-cdc-queue
+    SCHEDULER_CDC_QUEUE_TTL_SECONDS: "7200"
+    SCHEDULER_CDC_QUEUE_VISIBILITY_TIMEOUT_SECONDS: "0"
+    SCHEDULER_CDC_SEND_RETRY_MAX_ATTEMPTS: "1"
+    SCHEDULER_CDC_SEND_RETRY_INTERVAL_IN_MS: "1000"
+    SCHEDULER_CDC_STREAM_RETRY_MAX_ATTEMPTS: "15"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
+    CDC_QUEUE_CONNECTION_STRING: wallet-storage-connection-string
   keyvault:
     name: "pagopa-u-pay-wallet-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
