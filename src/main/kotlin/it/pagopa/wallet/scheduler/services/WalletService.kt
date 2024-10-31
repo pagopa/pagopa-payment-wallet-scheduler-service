@@ -38,7 +38,7 @@ class WalletService(
                 startDate = startDate.toString(),
                 endDate = endDate.toString(),
                 status = walletSearchConfig.status,
-                limit = Limit.of(walletSearchConfig.limit)
+                limit = walletSearchConfig.limit
             )
             .collectList()
             .doOnSuccess { logger.info("Wallets query result size: ${it.size}") }

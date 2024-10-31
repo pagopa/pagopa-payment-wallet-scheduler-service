@@ -4,14 +4,13 @@ import it.pagopa.wallet.scheduler.WalletTestUtils
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import org.junit.jupiter.api.Test
+import org.mockito.kotlin.*
+import reactor.core.publisher.Flux
+import reactor.test.StepVerifier
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals
-import org.junit.jupiter.api.Test
-import org.mockito.kotlin.*
-import org.springframework.data.domain.Limit
-import reactor.core.publisher.Flux
-import reactor.test.StepVerifier
 
 class WalletServiceTest {
 
@@ -52,7 +51,7 @@ class WalletServiceTest {
                 eq(startDate.toString()),
                 eq(endDate.toString()),
                 eq(walletSearchConfig.status),
-                eq(Limit.of(walletSearchConfig.limit))
+                eq(walletSearchConfig.limit)
             )
     }
 
@@ -80,7 +79,7 @@ class WalletServiceTest {
                 eq(startDate.toString()),
                 eq(endDate.toString()),
                 eq(walletSearchConfig.status),
-                eq(Limit.of(walletSearchConfig.limit))
+                eq(walletSearchConfig.limit)
             )
     }
 
