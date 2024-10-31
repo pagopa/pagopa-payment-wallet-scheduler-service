@@ -8,7 +8,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.TestPropertySource
 
 @SpringBootTest
-@TestPropertySource(locations = ["classpath:application-test.properties"])
+@TestPropertySource(locations = ["classpath:application.test.properties"])
 class PagopaPaymentWalletSchedulerApplicationTests {
     @MockBean private lateinit var mongoClient: MongoClient
 
