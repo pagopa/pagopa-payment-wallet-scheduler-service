@@ -14,8 +14,8 @@ import reactor.core.publisher.Mono
 
 @Service
 class WalletService(
-    @Autowired val walletRepository: WalletRepository,
-    @Autowired val walletSearchConfig: WalletSearchConfig
+    @Autowired private val walletRepository: WalletRepository,
+    @Autowired private val walletSearchConfig: WalletSearchConfig
 ) {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 

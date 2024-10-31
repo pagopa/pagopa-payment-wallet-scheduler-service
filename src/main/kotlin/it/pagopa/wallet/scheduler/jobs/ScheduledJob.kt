@@ -1,11 +1,11 @@
 package it.pagopa.wallet.scheduler.jobs
 
-/**
- * Scheduled Job common interface
- */
-interface ScheduledJob {
+import it.pagopa.wallet.scheduler.jobs.config.JobConfiguration
+
+/** Generic scheduled job common interface */
+interface ScheduledJob<T> where T : JobConfiguration {
 
     fun id(): String
 
-    fun process(configuration: JobConfiguration)
+    fun process(configuration: T)
 }
