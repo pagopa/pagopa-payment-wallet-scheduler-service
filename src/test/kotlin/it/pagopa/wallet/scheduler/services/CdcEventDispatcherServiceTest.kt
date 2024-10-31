@@ -1,4 +1,4 @@
-package it.pagopa.wallet.scheduler.service
+package it.pagopa.wallet.scheduler.services
 
 import com.azure.core.http.rest.Response
 import com.azure.storage.queue.models.SendMessageResult
