@@ -32,6 +32,7 @@ dependencyLocking { lockAllConfigurations() }
 
 dependencyManagement {
   imports { mavenBom("org.springframework.boot:spring-boot-dependencies:3.3.5") }
+  imports { mavenBom("com.azure.spring:spring-cloud-azure-dependencies:5.13.0") }
   // Kotlin BOM
   imports { mavenBom("org.jetbrains.kotlin:kotlin-bom:1.7.22") }
   imports { mavenBom("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4") }
@@ -52,6 +53,19 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   // otel api
   implementation("io.opentelemetry:opentelemetry-api:${Dependencies.openTelemetryVersion}")
+  // azure storage queue
+  implementation("com.azure.spring:spring-cloud-azure-starter")
+  implementation("com.azure:azure-storage-queue")
+  implementation("com.azure:azure-core-serializer-json-jackson")
+  // Byte Buddy
+  implementation("net.bytebuddy:byte-buddy:1.15.3")
+  // tests
+  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("io.projectreactor:reactor-test")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+  testImplementation("io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 configurations {
