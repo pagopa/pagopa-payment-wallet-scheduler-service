@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 /**
  * Payment wallet job: this job will scan all payment wallets in the given configuration retrieving
@@ -23,12 +24,12 @@ import reactor.core.publisher.Flux
 class OnboardedPaymentWalletJob(
     @Autowired private val walletService: WalletService,
     @Autowired private val cdcEventDispatcherService: CdcEventDispatcherService
-) : ScheduledJob<OnboardedPaymentWalletJobConfiguration> {
+) : ScheduledJob<OnboardedPaymentWalletJobConfiguration, Unit> {
 
     private val logger = LoggerFactory.getLogger(javaClass)
     override fun id(): String = "onboarded-payment-wallet-job"
 
-    override fun process(configuration: OnboardedPaymentWalletJobConfiguration) {
+    override fun process(configuration: OnboardedPaymentWalletJobConfiguration): Mono<Unit> {
         /*
            TODO: add redis checkpoint logic here to retrieve the latest processed wallet
            recover from redis the latest sent event date
@@ -38,7 +39,7 @@ class OnboardedPaymentWalletJob(
         val startDate = configuration.startDate
         val endDate = configuration.endDate
         logger.info("Starting payment wallet processing in time window {} - {}", startDate, endDate)
-        walletService
+        return walletService
             .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
             .flatMapMany { Flux.fromIterable(it) }
             .map {
@@ -76,6 +77,7 @@ class OnboardedPaymentWalletJob(
                                                 cardBrand = null,
                                                 pspId = walletDetails.pspId
                                             )
+                                        else -> null
                                     }
                                 },
                             status = it.status,
@@ -92,8 +94,8 @@ class OnboardedPaymentWalletJob(
             .flatMap { cdcEventDispatcherService.dispatchEvent(it) }
             .collectList()
             .map {
-                it.last()
-                    .timestamp // this is the wallet creation date and can be used to save it to
+                // it.last().timestamp  <- this is the wallet creation date and can be used to save
+                // it to
                 // Redis as latest processed chunk
                 // TODO: add redis checkpoint save here with the latest saved wallet date
             }
