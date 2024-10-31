@@ -1,6 +1,6 @@
 package it.pagopa.wallet.scheduler.service
 
-import it.pagopa.wallet.client.WalletQueueClient
+import it.pagopa.wallet.scheduler.client.WalletQueueClient
 import it.pagopa.wallet.scheduler.common.cdc.LoggingEvent
 import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig

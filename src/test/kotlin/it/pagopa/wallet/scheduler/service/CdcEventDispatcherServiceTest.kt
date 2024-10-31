@@ -2,7 +2,7 @@ package it.pagopa.wallet.scheduler.service
 
 import com.azure.core.http.rest.Response
 import com.azure.storage.queue.models.SendMessageResult
-import it.pagopa.wallet.client.WalletQueueClient
+import it.pagopa.wallet.scheduler.client.WalletQueueClient
 import it.pagopa.wallet.scheduler.common.cdc.*
 import it.pagopa.wallet.scheduler.common.tracing.TracedMono
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig
