@@ -1,6 +1,6 @@
 package it.pagopa.wallet.scheduler.common.cdc
 
-open class LoggingEvent(open val id: String, open val timestamp: String) {}
+sealed class LoggingEvent(open val id: String, open val timestamp: String)
 
 sealed class WalletLoggingEvent(
     open val walletId: String,

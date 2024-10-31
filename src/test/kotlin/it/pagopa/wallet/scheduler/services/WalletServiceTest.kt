@@ -4,13 +4,13 @@ import it.pagopa.wallet.scheduler.WalletTestUtils
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
 import reactor.core.publisher.Flux
 import reactor.test.StepVerifier
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import kotlin.test.assertEquals
 
 class WalletServiceTest {
 
