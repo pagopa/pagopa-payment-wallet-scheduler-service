@@ -23,38 +23,34 @@ class CdcEventDispatcherService(
     private val WALLET_CDC_EVENT_HANDLER_SPAN_NAME = "schedulerWalletEvent"
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun dispatchEvent(event: LoggingEvent?): Mono<LoggingEvent> =
-        if (event != null) {
-            Mono.defer {
-                    logger.info(
-                        "Handling new change stream event of type {} with id {} published on {}",
-                        event.javaClass,
-                        event.id,
-                        event.timestamp
+    fun dispatchEvent(event: LoggingEvent): Mono<LoggingEvent> =
+        Mono.defer {
+                logger.info(
+                    "Handling new change stream event of type {} with id {} published on {}",
+                    event.javaClass,
+                    event.id,
+                    event.timestamp
+                )
+                tracingUtils.traceMonoQueue(WALLET_CDC_EVENT_HANDLER_SPAN_NAME) { tracingInfo ->
+                    walletQueueClient.sendWalletEvent(
+                        event = event,
+                        delay = Duration.ofSeconds(cdcQueueConfig.visibilityTimeoutWalletCdc),
+                        tracingInfo = tracingInfo,
                     )
-                    tracingUtils.traceMonoQueue(WALLET_CDC_EVENT_HANDLER_SPAN_NAME) { tracingInfo ->
-                        walletQueueClient.sendWalletEvent(
-                            event = event,
-                            delay = Duration.ofSeconds(cdcQueueConfig.visibilityTimeoutWalletCdc),
-                            tracingInfo = tracingInfo,
+                }
+            }
+            .retryWhen(
+                Retry.fixedDelay(
+                        retrySendPolicyConfig.maxAttempts,
+                        Duration.ofMillis(retrySendPolicyConfig.intervalInMs)
+                    )
+                    .filter { t -> t is Exception }
+                    .doBeforeRetry { signal ->
+                        logger.warn(
+                            "Retrying writing event on CDC queue due to: ${signal.failure().message}"
                         )
                     }
-                }
-                .retryWhen(
-                    Retry.fixedDelay(
-                            retrySendPolicyConfig.maxAttempts,
-                            Duration.ofMillis(retrySendPolicyConfig.intervalInMs)
-                        )
-                        .filter { t -> t is Exception }
-                        .doBeforeRetry { signal ->
-                            logger.warn(
-                                "Retrying writing event on CDC queue due to: ${signal.failure().message}"
-                            )
-                        }
-                )
-                .doOnError { e -> logger.error("Failed to send event after retries {}", e.message) }
-                .map { event }
-        } else {
-            Mono.empty()
-        }
+            )
+            .doOnError { e -> logger.error("Failed to send event after retries {}", e.message) }
+            .map { event }
 }
