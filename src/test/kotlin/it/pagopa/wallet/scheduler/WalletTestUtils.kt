@@ -11,7 +11,6 @@ import java.util.*
 object WalletTestUtils {
 
     val USER_ID = UUID.randomUUID()
-    val WALLET_UUID = UUID.randomUUID()
     val WALLET_CREATED_STATUS = "CREATED"
     val CONTRACT_ID = "W49357937935R869i"
     val PAYMENT_METHOD_ID = UUID.randomUUID()
@@ -20,7 +19,7 @@ object WalletTestUtils {
 
     fun walletDocument(status: String): Wallet {
         return Wallet(
-            id = WALLET_UUID.toString(),
+            id = UUID.randomUUID().toString(),
             userId = USER_ID.toString(),
             status = status,
             paymentMethodId = PAYMENT_METHOD_ID.toString(),
