@@ -14,7 +14,7 @@ class OpenTelemetryConfiguration {
 
     @Bean
     fun openTelemetryTracer(openTelemetry: OpenTelemetry): Tracer =
-        openTelemetry.getTracer("pagopa-wallet-service")
+        openTelemetry.getTracer("pagopa-wallet-scheduler-service")
 
     @Bean
     fun tracingUtils(openTelemetry: OpenTelemetry, tracer: Tracer): TracingUtils =
