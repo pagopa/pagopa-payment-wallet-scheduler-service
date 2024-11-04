@@ -1,7 +1,7 @@
 package it.pagopa.wallet.scheduler.repositories
 
 import it.pagopa.wallet.scheduler.WalletTestUtils
-import it.pagopa.wallet.scheduler.WalletTestUtils.WALLET_CREATED_STATUS
+import it.pagopa.wallet.scheduler.WalletTestUtils.WALLET_VALIDATED_STATUS
 import it.pagopa.wallet.scheduler.config.MongoConfiguration
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import java.time.Instant
@@ -35,7 +35,7 @@ class WalletRepositoryTest {
         val saveMono =
             Flux.range(1, walletSearchConfig.limit + 1)
                 .flatMap {
-                    walletRepository.save(WalletTestUtils.walletDocument(WALLET_CREATED_STATUS))
+                    walletRepository.save(WalletTestUtils.walletDocument(WALLET_VALIDATED_STATUS))
                 }
                 .last()
 
@@ -45,7 +45,7 @@ class WalletRepositoryTest {
                     .findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
                         startDate = startDate,
                         endDate = endDate,
-                        status = WALLET_CREATED_STATUS,
+                        status = WALLET_VALIDATED_STATUS,
                         limit = walletSearchConfig.limit
                     )
                     .collectList()
