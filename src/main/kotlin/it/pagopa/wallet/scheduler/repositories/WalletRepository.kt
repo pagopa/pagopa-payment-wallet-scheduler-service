@@ -11,7 +11,7 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
 
     @Aggregation(
         "{\$match: {'creationDate': {'\$gt': '?0','\$lte': '?1'},'status': '?2'}}",
-        "{\$sort: {'updateDate': 1}}",
+        "{\$sort: {'creationDate': 1}}",
         "{\$limit: ?3}",
     )
     fun findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
