@@ -23,6 +23,7 @@ class WalletServiceTest {
     fun `Should return wallets by valid date range`() {
         val startDate: Instant = Instant.now().minus(10, ChronoUnit.DAYS)
         val endDate: Instant = Instant.now()
+        val wallet = WalletTestUtils.walletDocument(walletSearchConfig.status)
 
         given {
                 walletRepository.findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
@@ -34,7 +35,8 @@ class WalletServiceTest {
             }
             .willReturn(
                 Flux.just(
-                    WalletTestUtils.walletDocument(walletSearchConfig.status),
+                    // generate one fixed wallet and other random wallet
+                    wallet,
                     WalletTestUtils.walletDocument(walletSearchConfig.status)
                 )
             )
@@ -42,7 +44,7 @@ class WalletServiceTest {
         StepVerifier.create(walletService.getWalletsForCdcIngestion(startDate, endDate))
             .assertNext { list ->
                 assertEquals(list.size, 2)
-                assertEquals(list.get(0), WalletTestUtils.walletDocument(walletSearchConfig.status))
+                assertEquals(list.get(0), wallet)
             }
             .verifyComplete()
 
