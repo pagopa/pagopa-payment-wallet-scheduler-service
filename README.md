@@ -62,9 +62,7 @@ If you want to customize the application environment, reference this table:
 | SCHEDULER_CDC_SEND_RETRY_MAX_ATTEMPTS          | Max configurable attempts for performing the logic business related to a change event                                                                      | long              |         |
 | SCHEDULER_CDC_SEND_RETRY_INTERVAL_IN_MS        | Configurable interval in milliseconds between retries attempts                                                                                             | long              |         |
 | SCHEDULER_REDIS_RESUME_KEYSPACE                | Prefix used for redis key name                                                                                                                             | string            |         |
-| SCHEDULER_REDIS_RESUME_TARGET                  | Target used as suffix for redis key name                                                                                                                   | string            |         |
 | SCHEDULER_REDIS_RESUME_FALLBACK_IN_MIN         | Fallbacks in minutes before now in case there is no resume token in cache                                                                                  | long              |         |
-| SCHEDULER_REDIS_RESUME_TTL_IN_MIN              | Time to live in minutes of Redis items                                                                                                                     | long              |         |
 
 
 
