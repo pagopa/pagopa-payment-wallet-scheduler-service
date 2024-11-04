@@ -33,7 +33,7 @@ class RedisResumePolicyServiceTest {
             .willReturn(Optional.of(expected))
 
         val actual = redisResumePolicyService.getResumeTimestamp("target_test")
-        Assertions.assertTrue(actual == expected)
+        Assertions.assertTrue(actual.isPresent && actual.get() == expected)
     }
 
     @Test
