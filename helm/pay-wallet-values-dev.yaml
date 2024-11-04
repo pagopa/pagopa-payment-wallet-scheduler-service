@@ -83,8 +83,14 @@ microservice-chart:
     SCHEDULER_CDC_SEND_RETRY_INTERVAL_IN_MS: "1000"
     WALLET_SEARCH_STATUS: "VALIDATED"
     WALLET_SEARCH_LIMIT: "20"
+    SCHEDULER_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler"
+    SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "120"
+    REDIS_HOST: pagopa-d-itn-pay-wallet-redis.redis.cache.windows.net
+    REDIS_PORT: "6380"
+    REDIS_SSL_ENABLED: "true"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
+    REDIS_PASSWORD: redis-wallet-password
     SCHEDULER_CDC_QUEUE_CONNECTION_STRING: wallet-storage-connection-string
   keyvault:
     name: "pagopa-d-pay-wallet-kv"

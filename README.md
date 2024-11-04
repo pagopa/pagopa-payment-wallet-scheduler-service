@@ -33,7 +33,7 @@ $ cp .env.local .env
 
 to get a good default configuration.
 
-If you want to customize the application environment, reference this table:\
+If you want to customize the application environment, reference this table:
 
 
 | Variable name                                  | Description                                                                                                                                                | type              | default |
@@ -64,6 +64,11 @@ If you want to customize the application environment, reference this table:\
 | SCHEDULER_CDC_SEND_RETRY_INTERVAL_IN_MS        | Configurable interval in milliseconds between retries attempts                                                                                             | long              |         |
 | WALLET_SEARCH_STATUS                           | Wallet status search query for cdc injection                                                                                                               | string            |         |
 | WALLET_SEARCH_LIMIT                            | Wallet limit search query for cdc injection                                                                                                                | int               |         |
+| SCHEDULER_REDIS_RESUME_KEYSPACE                | Prefix used for redis key name                                                                                                                             | string              |         |
+| SCHEDULER_REDIS_RESUME_FALLBACK_IN_MIN         | Fallbacks in minutes before now in case there is no resume token in cache                                                                                  | long                |         |
+| REDIS_HOST                                     | Host of redis                                                                                                                                              | hostname (string)   | test    | 
+| REDIS_PORT                                     | Port of redis                                                                                                                                              | number              | 6380    |
+| REDIS_SSL_ENABLED                              | Redis should use SSL                                                                                                                                       | boolean             | true    |
 
 (*): for Mongo connection string options
 see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/connection/connection-options/#connection-options)
