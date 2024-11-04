@@ -27,24 +27,12 @@ class RedisResumePolicyServiceTest {
     }
 
     @Test
-    fun `redis resume policy will get default resume timestamp in case of cache miss`() {
-        val emptyOptional: Optional<Instant> = mock()
-        val expected: Instant = Instant.now()
-        given { redisTemplate.findByKeyspaceAndTarget(anyOrNull(), anyOrNull()) }
-            .willReturn(emptyOptional)
-        given { emptyOptional.orElseGet(anyOrNull()) }.willReturn(expected)
-
-        val actual = redisResumePolicyService.getResumeTimestamp()
-        Assertions.assertTrue(actual == expected)
-    }
-
-    @Test
     fun `redis resume policy will get resume timestamp in case of cache hit`() {
         val expected: Instant = Instant.now()
         given { redisTemplate.findByKeyspaceAndTarget(anyOrNull(), anyOrNull()) }
             .willReturn(Optional.of(expected))
 
-        val actual = redisResumePolicyService.getResumeTimestamp()
+        val actual = redisResumePolicyService.getResumeTimestamp("target_test")
         Assertions.assertTrue(actual == expected)
     }
 
@@ -53,7 +41,7 @@ class RedisResumePolicyServiceTest {
         val expected: Instant = Instant.now()
         doNothing().`when`(redisTemplate).save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
 
-        redisResumePolicyService.saveResumeTimestamp(expected)
+        redisResumePolicyService.saveResumeTimestamp("target_test", expected)
 
         verify(redisTemplate, times(1)).save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
     }

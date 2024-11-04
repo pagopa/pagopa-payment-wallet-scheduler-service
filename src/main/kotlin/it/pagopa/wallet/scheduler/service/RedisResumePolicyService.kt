@@ -3,7 +3,7 @@ package it.pagopa.wallet.scheduler.service
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
 import java.time.Duration
 import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.util.NoSuchElementException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -15,26 +15,17 @@ class RedisResumePolicyService(
 ) : ResumePolicyService {
     private val logger = LoggerFactory.getLogger(RedisResumePolicyService::class.java)
 
-    override fun getResumeTimestamp(): Instant {
+    override fun getResumeTimestamp(target: String): Instant {
         return redisTemplate
-            .findByKeyspaceAndTarget(
-                redisResumePolicyConfig.keyspace,
-                redisResumePolicyConfig.target
-            )
-            .orElseGet {
-                logger.warn(
-                    "Resume timestamp not found on Redis, fallback on Instant.now()-{} minutes",
-                    redisResumePolicyConfig.fallbackInMin
-                )
-                Instant.now().minus(redisResumePolicyConfig.fallbackInMin, ChronoUnit.MINUTES)
-            }
+            .findByKeyspaceAndTarget(redisResumePolicyConfig.keyspace, target)
+            .orElseThrow { NoSuchElementException("No resume timestamp found for target: $target") }
     }
 
-    override fun saveResumeTimestamp(timestamp: Instant) {
+    override fun saveResumeTimestamp(target: String, timestamp: Instant) {
         logger.debug("Saving instant: {}", timestamp.toString())
         redisTemplate.save(
             redisResumePolicyConfig.keyspace,
-            redisResumePolicyConfig.target,
+            target,
             timestamp,
             Duration.ofMinutes(redisResumePolicyConfig.ttlInMin)
         )
