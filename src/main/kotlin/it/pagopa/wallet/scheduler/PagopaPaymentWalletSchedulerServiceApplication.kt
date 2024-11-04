@@ -8,7 +8,7 @@ import org.springframework.boot.runApplication
 import reactor.core.publisher.Hooks
 
 @SpringBootApplication
-@EnableConfigurationProperties(CdcQueueConfig::class, RetrySendPolicyConfig::class)
+@EnableConfigurationProperties(CdcQueueConfig::class, RetrySendPolicyConfig::class, RedisResumePolicyConfig::class)
 class PagopaPaymentWalletSchedulerServiceApplication
 
 fun main(args: Array<String>) {
