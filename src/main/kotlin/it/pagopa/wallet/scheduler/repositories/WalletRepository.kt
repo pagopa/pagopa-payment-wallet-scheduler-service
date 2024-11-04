@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux
 interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
 
     @Aggregation(
-        "{\$match: {'creationDate': {'\$gte': '?0','\$lte': '?1'},'status': '?2'}}",
+        "{\$match: {'creationDate': {'\$gt': '?0','\$lte': '?1'},'status': '?2'}}",
         "{\$sort: {'updateDate': 1}}",
         "{\$limit: ?3}",
     )
