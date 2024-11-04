@@ -35,7 +35,9 @@ class WalletRepositoryTest {
         val saveMono =
             Flux.range(1, walletSearchConfig.limit + 1)
                 .flatMap {
-                    walletRepository.save(WalletTestUtils.walletDocument(WALLET_VALIDATED_STATUS))
+                    walletRepository.save(
+                        WalletTestUtils.paypalWalletDocument(WALLET_VALIDATED_STATUS)
+                    )
                 }
                 .last()
 

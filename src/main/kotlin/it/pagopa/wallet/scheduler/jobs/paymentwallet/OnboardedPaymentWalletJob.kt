@@ -82,7 +82,6 @@ class OnboardedPaymentWalletJob(
                                                 cardBrand = null,
                                                 pspId = walletDetails.pspId
                                             )
-                                        else -> null
                                     }
                                 },
                             status = it.status,

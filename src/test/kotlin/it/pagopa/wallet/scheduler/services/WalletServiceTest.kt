@@ -16,7 +16,7 @@ class WalletServiceTest {
 
     private val walletRepository: WalletRepository = mock()
     private val walletSearchConfig: WalletSearchConfig =
-        WalletSearchConfig(WalletTestUtils.WALLET_CREATED_STATUS, 10)
+        WalletSearchConfig(WalletTestUtils.WALLET_VALIDATED_STATUS, 10)
     private val walletService: WalletService = WalletService(walletRepository, walletSearchConfig)
 
     @Test
@@ -37,7 +37,7 @@ class WalletServiceTest {
                 Flux.just(
                     // generate one fixed wallet and other random wallet
                     wallet,
-                    WalletTestUtils.walletDocument(walletSearchConfig.status)
+                    WalletTestUtils.paypalWalletDocument(walletSearchConfig.status)
                 )
             )
 

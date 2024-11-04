@@ -9,5 +9,5 @@ import java.time.Instant
 sealed class JobConfiguration
 
 /** Payment wallet job configuration */
-class OnboardedPaymentWalletJobConfiguration(val startDate: Instant, val endDate: Instant) :
+data class OnboardedPaymentWalletJobConfiguration(val startDate: Instant, val endDate: Instant) :
     JobConfiguration()

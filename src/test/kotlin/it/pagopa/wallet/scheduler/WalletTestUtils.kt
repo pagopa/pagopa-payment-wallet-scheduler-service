@@ -48,7 +48,7 @@ object WalletTestUtils {
 
     fun cardWalletDocument(status: String): Wallet {
         return Wallet(
-            id = WALLET_UUID.toString(),
+            id = UUID.randomUUID().toString(),
             userId = USER_ID.toString(),
             status = status,
             paymentMethodId = PAYMENT_METHOD_ID.toString(),
@@ -67,7 +67,7 @@ object WalletTestUtils {
                     )
                 ),
             details = cardDetails(),
-            clients = mapOf("IO" to Client(status = "ENABLED", lastUsage = null)),
+            clients = mapOf("IO" to Client(status = "ENABLED")),
             version = 0,
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,
