@@ -28,8 +28,13 @@ class PaymentWalletScheduledJob(
                 )
             )
             .subscribe(
-                {},
-                {},
+                {
+                    logger.info(
+                        "Payment wallets processed successfully. Latest created date processed wallet: [{}]",
+                        it
+                    )
+                },
+                { logger.error("Exception processing payment wallets", it) },
                 {
                     logger.info(
                         "Overall processing completed. Elapsed time: [{}]",

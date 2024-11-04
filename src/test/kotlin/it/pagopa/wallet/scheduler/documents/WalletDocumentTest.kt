@@ -9,7 +9,7 @@ class WalletDocumentTest {
 
     @Test
     fun `can build wallet document`() {
-        val wallet = WalletTestUtils.walletDocument(WalletTestUtils.WALLET_VALIDATED_STATUS)
+        val wallet = WalletTestUtils.paypalWalletDocument(WalletTestUtils.WALLET_CREATED_STATUS)
         assertNotNull(wallet.id)
         assertNotNull(wallet.userId)
         assertNotNull(wallet.status)

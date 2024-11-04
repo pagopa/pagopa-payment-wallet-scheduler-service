@@ -17,7 +17,7 @@ object WalletTestUtils {
     val ONBOARDING_CHANNEL = "IO"
     val CREATION_DATE: Instant = Instant.now()
 
-    fun walletDocument(status: String): Wallet {
+    fun paypalWalletDocument(status: String): Wallet {
         return Wallet(
             id = UUID.randomUUID().toString(),
             userId = USER_ID.toString(),
@@ -39,6 +39,35 @@ object WalletTestUtils {
                 ),
             details = paypalDetails(),
             clients = mapOf("IO" to Client(status = "ENABLED")),
+            version = 0,
+            creationDate = CREATION_DATE,
+            updateDate = CREATION_DATE,
+            onboardingChannel = ONBOARDING_CHANNEL
+        )
+    }
+
+    fun cardWalletDocument(status: String): Wallet {
+        return Wallet(
+            id = WALLET_UUID.toString(),
+            userId = USER_ID.toString(),
+            status = status,
+            paymentMethodId = PAYMENT_METHOD_ID.toString(),
+            contractId = CONTRACT_ID,
+            validationOperationResult = null,
+            validationErrorCode = null,
+            errorReason = null,
+            applications =
+                listOf(
+                    WalletApplication(
+                        id = "PAGOPA",
+                        status = "ENABLED",
+                        creationDate = CREATION_DATE.toString(),
+                        updateDate = CREATION_DATE.toString(),
+                        metadata = mapOf()
+                    )
+                ),
+            details = cardDetails(),
+            clients = mapOf("IO" to Client(status = "ENABLED", lastUsage = null)),
             version = 0,
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,

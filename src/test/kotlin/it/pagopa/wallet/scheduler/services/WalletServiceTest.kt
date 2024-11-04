@@ -16,14 +16,14 @@ class WalletServiceTest {
 
     private val walletRepository: WalletRepository = mock()
     private val walletSearchConfig: WalletSearchConfig =
-        WalletSearchConfig(WalletTestUtils.WALLET_VALIDATED_STATUS, 10)
+        WalletSearchConfig(WalletTestUtils.WALLET_CREATED_STATUS, 10)
     private val walletService: WalletService = WalletService(walletRepository, walletSearchConfig)
 
     @Test
     fun `Should return wallets by valid date range`() {
         val startDate: Instant = Instant.now().minus(10, ChronoUnit.DAYS)
         val endDate: Instant = Instant.now()
-        val wallet = WalletTestUtils.walletDocument(walletSearchConfig.status)
+        val wallet = WalletTestUtils.paypalWalletDocument(walletSearchConfig.status)
 
         given {
                 walletRepository.findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
