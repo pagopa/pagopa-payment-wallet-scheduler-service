@@ -84,7 +84,7 @@ microservice-chart:
     CDC_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler"
     CDC_REDIS_RESUME_TARGET: "pay-wallet-job"
     CDC_REDIS_RESUME_FALLBACK_IN_MIN: "10"
-    CDC_REDIS_RESUME_TTL_IN_MIN: "1440"
+    CDC_REDIS_RESUME_TTL_IN_MIN: "120"
     CDC_RESUME_SAVE_INTERVAL: "5"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
