@@ -17,7 +17,7 @@ class WalletSearchConfigTest {
     @Test
     fun configLoads() {
         // check if config is loaded
-        Assertions.assertEquals(walletSearchConfig.status, "CREATED")
+        Assertions.assertEquals(walletSearchConfig.status, "VALIDATED")
         Assertions.assertEquals(walletSearchConfig.limit, 10)
     }
 }

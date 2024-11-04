@@ -16,7 +16,7 @@ class WalletServiceTest {
 
     private val walletRepository: WalletRepository = mock()
     private val walletSearchConfig: WalletSearchConfig =
-        WalletSearchConfig(WalletTestUtils.WALLET_CREATED_STATUS, 10)
+        WalletSearchConfig(WalletTestUtils.WALLET_VALIDATED_STATUS, 10)
     private val walletService: WalletService = WalletService(walletRepository, walletSearchConfig)
 
     @Test

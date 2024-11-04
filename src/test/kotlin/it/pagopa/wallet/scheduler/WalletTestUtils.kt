@@ -12,7 +12,7 @@ object WalletTestUtils {
 
     val USER_ID = UUID.randomUUID()
     val WALLET_UUID = UUID.randomUUID()
-    val WALLET_CREATED_STATUS = "CREATED"
+    val WALLET_VALIDATED_STATUS = "VALIDATED"
     val CONTRACT_ID = "W49357937935R869i"
     val PAYMENT_METHOD_ID = UUID.randomUUID()
     val ONBOARDING_CHANNEL = "IO"
