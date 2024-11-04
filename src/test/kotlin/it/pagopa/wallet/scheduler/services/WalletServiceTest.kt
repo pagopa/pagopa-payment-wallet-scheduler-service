@@ -42,10 +42,7 @@ class WalletServiceTest {
             )
 
         StepVerifier.create(walletService.getWalletsForCdcIngestion(startDate, endDate))
-            .assertNext { list ->
-                assertEquals(list.size, 2)
-                assertEquals(list.get(0), wallet)
-            }
+            .assertNext { assertEquals(it, wallet) }
             .verifyComplete()
 
         verify(walletRepository, times(1))
@@ -73,7 +70,6 @@ class WalletServiceTest {
             .willReturn(Flux.empty())
 
         StepVerifier.create(walletService.getWalletsForCdcIngestion(startDate, endDate))
-            .assertNext { list -> assertEquals(list.size, 0) }
             .verifyComplete()
 
         verify(walletRepository, times(1))

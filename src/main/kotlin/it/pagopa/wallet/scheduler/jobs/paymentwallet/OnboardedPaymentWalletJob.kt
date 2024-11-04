@@ -4,6 +4,7 @@ import it.pagopa.wallet.scheduler.common.cdc.AuditWallet
 import it.pagopa.wallet.scheduler.common.cdc.AuditWalletApplication
 import it.pagopa.wallet.scheduler.common.cdc.AuditWalletDetails
 import it.pagopa.wallet.scheduler.common.cdc.WalletOnboardCompletedEvent
+import it.pagopa.wallet.scheduler.documents.Wallet
 import it.pagopa.wallet.scheduler.documents.details.CardDetails
 import it.pagopa.wallet.scheduler.documents.details.PayPalDetails
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
@@ -44,9 +45,8 @@ class OnboardedPaymentWalletJob(
         return walletService
             .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
             .switchIfEmpty {
-                Mono.error(NoWalletFoundException(startDate = startDate, endDate = endDate))
+                Flux.error<Wallet>(NoWalletFoundException(startDate = startDate, endDate = endDate))
             }
-            .flatMapMany { Flux.fromIterable(it) }
             .map {
                 WalletOnboardCompletedEvent(
                     id = it.id,

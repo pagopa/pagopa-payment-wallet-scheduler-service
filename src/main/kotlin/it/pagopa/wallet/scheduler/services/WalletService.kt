@@ -10,7 +10,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
+import reactor.core.publisher.Flux
 
 @Service
 class WalletService(
@@ -19,7 +19,7 @@ class WalletService(
 ) {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
-    fun getWalletsForCdcIngestion(startDate: Instant, endDate: Instant): Mono<List<Wallet>> {
+    fun getWalletsForCdcIngestion(startDate: Instant, endDate: Instant): Flux<Wallet> {
         logger.info(
             "Search wallets for CDC ingestion. From [{}] to [{}] - Status [{}] - Limit [{}]",
             startDate,
@@ -30,17 +30,13 @@ class WalletService(
 
         // check if is valid date range
         if (endDate.isBefore(startDate))
-            return Mono.error(WalletInvalidRangeException(startDate, endDate))
+            return Flux.error(WalletInvalidRangeException(startDate, endDate))
 
-        return walletRepository
-            .findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
-                startDate = startDate.toString(),
-                endDate = endDate.toString(),
-                status = walletSearchConfig.status,
-                limit = walletSearchConfig.limit
-            )
-            .collectList()
-            .doOnSuccess { logger.info("Wallets query result size: ${it.size}") }
-            .doOnError { logger.error("Wallets search query failed!", it) }
+        return walletRepository.findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
+            startDate = startDate.toString(),
+            endDate = endDate.toString(),
+            status = walletSearchConfig.status,
+            limit = walletSearchConfig.limit
+        )
     }
 }

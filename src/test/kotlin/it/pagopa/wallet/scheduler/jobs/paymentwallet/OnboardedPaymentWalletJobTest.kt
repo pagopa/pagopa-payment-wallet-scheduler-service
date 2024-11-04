@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 import org.mockito.kotlin.any
 import org.mockito.kotlin.given
-import reactor.core.publisher.Mono
+import reactor.core.publisher.Flux
 import reactor.test.StepVerifier
 
 class OnboardedPaymentWalletJobTest {
@@ -81,7 +81,7 @@ class OnboardedPaymentWalletJobTest {
                 )
             }
         given(walletService.getWalletsForCdcIngestion(any(), any()))
-            .willReturn(mono { foundWallets })
+            .willReturn(Flux.fromIterable(foundWallets))
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
@@ -149,7 +149,7 @@ class OnboardedPaymentWalletJobTest {
                 )
             }
         given(walletService.getWalletsForCdcIngestion(any(), any()))
-            .willReturn(mono { foundWallets })
+            .willReturn(Flux.fromIterable(foundWallets))
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
@@ -178,7 +178,7 @@ class OnboardedPaymentWalletJobTest {
         val jobConf =
             OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
 
-        given(walletService.getWalletsForCdcIngestion(any(), any())).willReturn(Mono.empty())
+        given(walletService.getWalletsForCdcIngestion(any(), any())).willReturn(Flux.empty())
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
