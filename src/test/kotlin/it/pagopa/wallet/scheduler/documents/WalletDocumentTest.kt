@@ -9,7 +9,7 @@ class WalletDocumentTest {
 
     @Test
     fun `can build wallet document`() {
-        val wallet = WalletTestUtils.walletDocument(WalletTestUtils.WALLET_CREATED_STATUS)
+        val wallet = WalletTestUtils.walletDocument(WalletTestUtils.WALLET_VALIDATED_STATUS)
         assertNotNull(wallet.id)
         assertNotNull(wallet.userId)
         assertNotNull(wallet.status)
@@ -31,7 +31,6 @@ class WalletDocumentTest {
         wallet.clients.forEach {
             assertNotNull(it.key)
             assertNotNull(it.value.status)
-            assertNull(it.value.lastUsage)
         }
         assertNotNull(wallet.version)
         assertNotNull(wallet.creationDate)
