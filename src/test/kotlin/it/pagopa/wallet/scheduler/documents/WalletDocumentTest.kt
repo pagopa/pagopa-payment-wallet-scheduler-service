@@ -31,7 +31,6 @@ class WalletDocumentTest {
         wallet.clients.forEach {
             assertNotNull(it.key)
             assertNotNull(it.value.status)
-            assertNull(it.value.lastUsage)
         }
         assertNotNull(wallet.version)
         assertNotNull(wallet.creationDate)

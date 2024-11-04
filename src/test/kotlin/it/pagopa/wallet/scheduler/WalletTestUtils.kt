@@ -39,7 +39,7 @@ object WalletTestUtils {
                     )
                 ),
             details = paypalDetails(),
-            clients = mapOf("IO" to Client(status = "ENABLED", lastUsage = null)),
+            clients = mapOf("IO" to Client(status = "ENABLED")),
             version = 0,
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,
