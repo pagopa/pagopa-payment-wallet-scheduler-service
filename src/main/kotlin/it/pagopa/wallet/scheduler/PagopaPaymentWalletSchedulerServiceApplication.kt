@@ -9,7 +9,11 @@ import org.springframework.boot.runApplication
 import reactor.core.publisher.Hooks
 
 @SpringBootApplication
-@EnableConfigurationProperties(WalletSearchConfig::class, CdcQueueConfig::class, RetrySendPolicyConfig::class)
+@EnableConfigurationProperties(
+    WalletSearchConfig::class,
+    CdcQueueConfig::class,
+    RetrySendPolicyConfig::class
+)
 class PagopaPaymentWalletSchedulerServiceApplication
 
 fun main(args: Array<String>) {
