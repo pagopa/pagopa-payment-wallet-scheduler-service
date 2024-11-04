@@ -107,6 +107,7 @@ microservice-chart:
     SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "120"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
+    REDIS_PASSWORD: redis-wallet-password
     SCHEDULER_CDC_QUEUE_CONNECTION_STRING: wallet-storage-connection-string
   keyvault:
     name: "pagopa-u-pay-wallet-kv"
