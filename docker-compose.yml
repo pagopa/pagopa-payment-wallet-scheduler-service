@@ -1,21 +1,7 @@
 services:
 
-  pagopa-wallet-scheduler:
-    container_name: pagopa-wallet-scheduler-service
-    build:
-      dockerfile: Dockerfile
-      context: .
-    env_file:
-      - ./.env
-    ports:
-      - "8400:8080"
-    depends_on:
-      - mongodb
-    networks:
-      - pagopa-wallet-scheduler-net
-
   mongo-express:
-    container_name: pagopa-wallet-scheduler-mongo-express
+    container_name: pagopa-cdc-wallet-mongo-express
     image: mongo-express@sha256:1b23d7976f0210dbec74045c209e52fbb26d29b2e873d6c6fa3d3f0ae32c2a64
     env_file: docker-local/mongo/mongo-express.env
     extra_hosts:
@@ -23,12 +9,12 @@ services:
     ports:
       - "8201:8081"
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
     depends_on:
       - mongodb
 
   mongodb:
-    container_name: pagopa-wallet-scheduler-mongodb
+    container_name: mongodb
     image: mongo:6@sha256:28bf77ff23511baafb3262d7e6f5ae3634e784662e147ef4f6950a07a43c5eab
     restart: always
     command: [ "--replSet", "rs0", "--bind_ip_all", "--noauth", "--port", "27017"]
@@ -45,7 +31,17 @@ services:
     volumes:
       - data:/data/db
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
+
+  wallet-events-producer-testing:
+    build: docker-local/wallet-events-producer-testing
+    container_name: wallet-events-producer-testing
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mongodb
+    networks:
+      - pagopa-cdc-wallet-net
 
   pagopa-cdc-wallet:
     container_name: pagopa-cdc-wallet-service
@@ -61,19 +57,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
     volumes:
       - ./docker-local/wallet-cdc/application.properties:/config/application.properties
-
-  wallet-events-producer-testing:
-    build: docker-local/wallet-events-producer-testing
-    container_name: wallet-events-producer-testing
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - mongodb
-    networks:
-      - pagopa-wallet-scheduler-net
 
   redis:
     container_name: wallet-redis
@@ -82,7 +68,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
 
   redis-insight:
     container_name: wallet-redis-insight
@@ -90,11 +76,11 @@ services:
     ports:
       - "8001:8001"
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
 
   storage:
     image: mcr.microsoft.com/azure-storage/azurite:latest@sha256:d449d953a1c5bd1e26c800744a65c451e88f3387b696e02e3e2e79a995c3105b
-    container_name: pagopa-wallet-scheduler-azurite
+    container_name: pagopa-wallet-azurite
     ports:
       - "10000:10000"
       - "10001:10001"
@@ -102,22 +88,23 @@ services:
     volumes:
       - $PWD/.data:/opt/azurite/folder
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
 
-  azurite-init:
-    container_name: pagopa-wallet-scheduler-azurite-init
+  azurite-cdc:
+    container_name: pagopa-wallet-azurite-cdc-init
     build:
       context: docker-local/azurite/
       dockerfile: Dockerfile
     depends_on:
       - storage
     environment:
+      QUEUE_EXPIRATION_WALLET: pagopa-wallet-expiration-queue
       QUEUE_CDC_WALLET: pagopa-wallet-cdc-queue
     networks:
-      - pagopa-wallet-scheduler-net
+      - pagopa-cdc-wallet-net
 
 networks:
-  pagopa-wallet-scheduler-net:
+  pagopa-cdc-wallet-net:
     driver: bridge
     ipam:
       config:
