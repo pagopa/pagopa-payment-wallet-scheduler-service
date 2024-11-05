@@ -1,6 +1,6 @@
 package it.pagopa.wallet.scheduler.repositories
 
-import it.pagopa.wallet.scheduler.documents.Wallet
+import it.pagopa.wallet.documents.wallets.Wallet
 import org.springframework.data.mongodb.repository.Aggregation
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import org.springframework.stereotype.Repository

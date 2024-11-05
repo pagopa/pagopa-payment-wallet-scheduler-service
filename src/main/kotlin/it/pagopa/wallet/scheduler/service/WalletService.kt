@@ -1,7 +1,7 @@
 package it.pagopa.wallet.scheduler.service
 
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
-import it.pagopa.wallet.scheduler.documents.Wallet
+import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Instant

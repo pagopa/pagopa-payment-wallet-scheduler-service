@@ -1,4 +1,4 @@
-package it.pagopa.wallet.scheduler.documents
+package it.pagopa.wallet.documents.wallets
 
 data class WalletApplication(
     val id: String,

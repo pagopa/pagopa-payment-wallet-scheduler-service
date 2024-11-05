@@ -1,6 +1,6 @@
-package it.pagopa.wallet.scheduler.documents
+package it.pagopa.wallet.documents.wallets
 
-import it.pagopa.wallet.scheduler.documents.details.WalletDetails
+import it.pagopa.wallet.documents.wallets.details.WalletDetails
 import java.time.Instant
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document

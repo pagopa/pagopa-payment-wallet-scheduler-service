@@ -1,4 +1,4 @@
-package it.pagopa.wallet.scheduler.documents.details
+package it.pagopa.wallet.documents.wallets.details
 
 data class CardDetails(
     val type: String,

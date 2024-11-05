@@ -1,10 +1,10 @@
 package it.pagopa.wallet.scheduler
 
-import it.pagopa.wallet.scheduler.documents.Client
-import it.pagopa.wallet.scheduler.documents.Wallet
-import it.pagopa.wallet.scheduler.documents.WalletApplication
-import it.pagopa.wallet.scheduler.documents.details.CardDetails
-import it.pagopa.wallet.scheduler.documents.details.PayPalDetails
+import it.pagopa.wallet.documents.wallets.Client
+import it.pagopa.wallet.documents.wallets.Wallet
+import it.pagopa.wallet.documents.wallets.WalletApplication
+import it.pagopa.wallet.documents.wallets.details.CardDetails
+import it.pagopa.wallet.documents.wallets.details.PayPalDetails
 import java.time.Instant
 import java.util.*
 
