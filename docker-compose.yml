@@ -9,7 +9,7 @@ services:
     ports:
       - "8201:8081"
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
     depends_on:
       - mongodb
 
@@ -31,7 +31,7 @@ services:
     volumes:
       - data:/data/db
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
 
   wallet-events-producer-testing:
     build: docker-local/wallet-events-producer-testing
@@ -41,26 +41,21 @@ services:
     depends_on:
       - mongodb
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
 
-  pagopa-cdc-wallet:
-    container_name: pagopa-cdc-wallet-service
+  pagopa-wallet-scheduler:
+    container_name: pagopa-wallet-scheduler-service
     build:
       dockerfile: Dockerfile
       context: .
     env_file:
-      - docker-local/wallet-cdc/wallet-cdc.env
+      - ./.env
     ports:
-      - "8300:8080"
+      - "8400:8080"
     depends_on:
       - mongodb
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
-      - pagopa-cdc-wallet-net
-    volumes:
-      - ./docker-local/wallet-cdc/application.properties:/config/application.properties
-
+      - pagopa-wallet-scheduler-net
   redis:
     container_name: wallet-redis
     image: redis@sha256:e422889e156ebea83856b6ff973bfe0c86bce867d80def228044eeecf925592b
@@ -68,7 +63,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
 
   redis-insight:
     container_name: wallet-redis-insight
@@ -76,7 +71,7 @@ services:
     ports:
       - "8001:8001"
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
 
   storage:
     image: mcr.microsoft.com/azure-storage/azurite:latest@sha256:d449d953a1c5bd1e26c800744a65c451e88f3387b696e02e3e2e79a995c3105b
@@ -88,7 +83,7 @@ services:
     volumes:
       - $PWD/.data:/opt/azurite/folder
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
 
   azurite-cdc:
     container_name: pagopa-wallet-azurite-cdc-init
@@ -101,10 +96,10 @@ services:
       QUEUE_EXPIRATION_WALLET: pagopa-wallet-expiration-queue
       QUEUE_CDC_WALLET: pagopa-wallet-cdc-queue
     networks:
-      - pagopa-cdc-wallet-net
+      - pagopa-wallet-scheduler-net
 
 networks:
-  pagopa-cdc-wallet-net:
+  pagopa-wallet-scheduler-net:
     driver: bridge
     ipam:
       config:
