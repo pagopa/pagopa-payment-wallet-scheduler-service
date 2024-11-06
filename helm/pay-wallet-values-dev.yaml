@@ -83,6 +83,9 @@ microservice-chart:
     SCHEDULER_CDC_SEND_RETRY_INTERVAL_IN_MS: "1000"
     SCHEDULER_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler"
     SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "120"
+    SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler"
+    SCHEDULER_REDIS_JOB_LOCK_TTL_SEC: "120"
+    SCHEDULER_REDIS_JOB_LOCK_WAIT_TIME_SEC: "10"
     REDIS_HOST: pagopa-d-itn-pay-wallet-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
