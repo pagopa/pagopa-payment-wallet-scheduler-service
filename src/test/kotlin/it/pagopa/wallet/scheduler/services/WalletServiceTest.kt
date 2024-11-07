@@ -4,7 +4,6 @@ import it.pagopa.wallet.scheduler.WalletTestUtils
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
-import it.pagopa.wallet.scheduler.service.WalletService
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals

@@ -1,4 +1,4 @@
-package it.pagopa.wallet.scheduler.service
+package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig

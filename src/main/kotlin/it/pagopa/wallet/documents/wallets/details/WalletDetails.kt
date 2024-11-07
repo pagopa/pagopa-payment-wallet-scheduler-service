@@ -1,3 +1,3 @@
 package it.pagopa.wallet.documents.wallets.details
 
-interface WalletDetails<T>
+sealed interface WalletDetails<T>

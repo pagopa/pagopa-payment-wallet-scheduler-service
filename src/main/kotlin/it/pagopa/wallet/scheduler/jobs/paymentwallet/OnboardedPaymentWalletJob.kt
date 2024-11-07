@@ -1,12 +1,12 @@
 package it.pagopa.wallet.scheduler.jobs.paymentwallet
 
+import it.pagopa.wallet.documents.wallets.Wallet
+import it.pagopa.wallet.documents.wallets.details.CardDetails
+import it.pagopa.wallet.documents.wallets.details.PayPalDetails
 import it.pagopa.wallet.scheduler.common.cdc.AuditWallet
 import it.pagopa.wallet.scheduler.common.cdc.AuditWalletApplication
 import it.pagopa.wallet.scheduler.common.cdc.AuditWalletDetails
 import it.pagopa.wallet.scheduler.common.cdc.WalletOnboardCompletedEvent
-import it.pagopa.wallet.scheduler.documents.Wallet
-import it.pagopa.wallet.scheduler.documents.details.CardDetails
-import it.pagopa.wallet.scheduler.documents.details.PayPalDetails
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.jobs.ScheduledJob
 import it.pagopa.wallet.scheduler.jobs.config.OnboardedPaymentWalletJobConfiguration
@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 
 /**
  * Payment wallet job: this job will scan all payment wallets in the given configuration retrieving
