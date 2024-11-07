@@ -10,6 +10,7 @@ import it.pagopa.wallet.scheduler.common.cdc.WalletOnboardCompletedEvent
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.jobs.config.OnboardedPaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.services.CdcEventDispatcherService
+import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.WalletService
 import java.time.Duration
 import java.time.Instant
@@ -28,10 +29,13 @@ class OnboardedPaymentWalletJobTest {
 
     private val cdcEventDispatcherService: CdcEventDispatcherService = mock()
 
+    private val redisResumePolicyService: RedisResumePolicyService = mock()
+
     private val onboardedPaymentWalletJob =
         OnboardedPaymentWalletJob(
             walletService = walletService,
-            cdcEventDispatcherService = cdcEventDispatcherService
+            cdcEventDispatcherService = cdcEventDispatcherService,
+            redisResumePolicyService = redisResumePolicyService
         )
 
     @Test

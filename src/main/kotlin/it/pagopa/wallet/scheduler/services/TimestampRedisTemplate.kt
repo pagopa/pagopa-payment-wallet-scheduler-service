@@ -1,4 +1,4 @@
-package it.pagopa.wallet.scheduler.service
+package it.pagopa.wallet.scheduler.services
 
 import java.time.Duration
 import java.time.Instant
