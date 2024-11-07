@@ -1,11 +1,10 @@
-package it.pagopa.wallet.scheduler.services
+package it.pagopa.wallet.scheduler.service
 
+import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
-import it.pagopa.wallet.scheduler.documents.Wallet
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Instant
-import java.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,11 +31,13 @@ class WalletService(
         if (endDate.isBefore(startDate))
             return Flux.error(WalletInvalidRangeException(startDate, endDate))
 
-        return walletRepository.findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
-            startDate = startDate.toString(),
-            endDate = endDate.toString(),
-            status = walletSearchConfig.status,
-            limit = walletSearchConfig.limit
-        )
+        return walletRepository
+            .findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
+                startDate = startDate.toString(),
+                endDate = endDate.toString(),
+                status = walletSearchConfig.status,
+                limit = walletSearchConfig.limit
+            )
+            .doOnError { logger.error("Wallets search query failed!", it) }
     }
 }

@@ -2,6 +2,7 @@ package it.pagopa.wallet.scheduler
 
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig
+import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.PaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.config.properties.RetrySendPolicyConfig
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -14,6 +15,7 @@ import reactor.core.publisher.Hooks
     WalletSearchConfig::class,
     CdcQueueConfig::class,
     RetrySendPolicyConfig::class,
+    RedisResumePolicyConfig::class,
     PaymentWalletJobConfiguration::class
 )
 class PagopaPaymentWalletSchedulerServiceApplication

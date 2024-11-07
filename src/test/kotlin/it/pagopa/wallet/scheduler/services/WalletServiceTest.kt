@@ -4,6 +4,7 @@ import it.pagopa.wallet.scheduler.WalletTestUtils
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import it.pagopa.wallet.scheduler.service.WalletService
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals
@@ -41,8 +42,13 @@ class WalletServiceTest {
                 )
             )
 
-        StepVerifier.create(walletService.getWalletsForCdcIngestion(startDate, endDate))
-            .assertNext { assertEquals(it, wallet) }
+        StepVerifier.create(
+                walletService.getWalletsForCdcIngestion(startDate, endDate).collectList()
+            )
+            .assertNext { list ->
+                assertEquals(list.size, 2)
+                assertEquals(list.get(0), wallet)
+            }
             .verifyComplete()
 
         verify(walletRepository, times(1))
@@ -69,7 +75,10 @@ class WalletServiceTest {
             }
             .willReturn(Flux.empty())
 
-        StepVerifier.create(walletService.getWalletsForCdcIngestion(startDate, endDate))
+        StepVerifier.create(
+                walletService.getWalletsForCdcIngestion(startDate, endDate).collectList()
+            )
+            .assertNext { list -> assertEquals(list.size, 0) }
             .verifyComplete()
 
         verify(walletRepository, times(1))
