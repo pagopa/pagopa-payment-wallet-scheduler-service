@@ -3,6 +3,8 @@ package it.pagopa.wallet.scheduler.service
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
+import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
+import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
 import java.util.concurrent.TimeUnit
 import org.redisson.api.RedissonReactiveClient
 import org.slf4j.Logger
@@ -22,7 +24,7 @@ class SchedulerLockService(
     fun acquireJobLock(jobName: String): Mono<Void> {
         logger.info("Trying to acquire lock for job: {}", jobName)
         return redissonClient
-            .getLock(redisJobLockPolicyConfig.getLockByTarget(jobName))
+            .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
             .tryLock(
                 redisJobLockPolicyConfig.waitTimeSec,
                 redisJobLockPolicyConfig.ttlSec,
@@ -41,7 +43,7 @@ class SchedulerLockService(
     fun releaseJobLock(jobName: String): Mono<Void> {
         logger.info("Trying to release lock for job: {}", jobName)
         return redissonClient
-            .getLock(redisJobLockPolicyConfig.getLockByTarget(jobName))
+            .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
             .unlock()
             .doOnSuccess { logger.info("Lock released for job: {}", jobName) }
             .onErrorResume {
@@ -54,7 +56,7 @@ class SchedulerLockService(
         logger.info("Trying to acquire semaphore for job: {}", jobName)
         val semaphore =
             redissonClient.getPermitExpirableSemaphore(
-                redisJobLockPolicyConfig.getLockByTarget(jobName)
+                redisJobLockPolicyConfig.getSemNameByJob(jobName)
             )
         return semaphore
             .trySetPermits(1)
@@ -65,23 +67,23 @@ class SchedulerLockService(
                     TimeUnit.SECONDS
                 )
             }
-            .switchIfEmpty { Mono.error(LockNotAcquiredException(jobName)) }
+            .switchIfEmpty { Mono.error(SemNotAcquiredException(jobName)) }
             .doOnSuccess { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }
             .onErrorResume {
                 logger.error("Semaphore acquiring error for job: {}", jobName, it)
-                Mono.error(LockNotAcquiredException(jobName, it))
+                Mono.error(SemNotAcquiredException(jobName, it))
             }
     }
 
     fun releaseJobSemaphore(jobName: String, semaphoreId: String): Mono<Void> {
         logger.info("Trying to release semaphore for job: {}", jobName)
         return redissonClient
-            .getPermitExpirableSemaphore(redisJobLockPolicyConfig.getLockByTarget(jobName))
+            .getPermitExpirableSemaphore(redisJobLockPolicyConfig.getSemNameByJob(jobName))
             .release(semaphoreId)
             .doOnSuccess { logger.info("Semaphore released for job: {}", jobName) }
             .onErrorResume {
                 logger.error("Semaphore releasing error for job: {}", jobName, it)
-                Mono.error(LockNotReleasedException(jobName, it))
+                Mono.error(SemNotReleasedException(jobName, it))
             }
     }
 }

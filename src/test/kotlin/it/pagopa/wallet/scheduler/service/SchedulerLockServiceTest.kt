@@ -3,6 +3,8 @@ package it.pagopa.wallet.scheduler.service
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
+import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
+import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
 import kotlin.test.Test
 import org.junit.jupiter.api.BeforeAll
 import org.mockito.ArgumentMatchers
@@ -67,25 +69,25 @@ class SchedulerLockServiceTest {
     }
 
     @Test
-    fun `Should throw LockNotAcquiredException when semaphore is already aquired`() {
+    fun `Should throw SemNotAcquiredException when semaphore is already aquired`() {
         given { rPermitExpirableSemaphoreReactive.tryAcquire(any(), any(), any()) }
             .willReturn(Mono.just("semaphoreId"))
 
         schedulerLockService
             .acquireJobSemaphore("job-name-semaphore")
             .test()
-            .expectError(LockNotAcquiredException::class.java)
+            .expectError(SemNotAcquiredException::class.java)
     }
 
     @Test
-    fun `Should throw LockNotReleasedException when fail semaphore release`() {
+    fun `Should throw SemNotReleasedException when fail semaphore release`() {
         given { rPermitExpirableSemaphoreReactive.release(ArgumentMatchers.anyString()) }
             .willThrow(RuntimeException::class.java)
 
         schedulerLockService
             .releaseJobSemaphore("job-name-semaphore", "semaphoreId")
             .test()
-            .expectError(LockNotReleasedException::class.java)
+            .expectError(SemNotReleasedException::class.java)
     }
 
     companion object {
