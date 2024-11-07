@@ -1,8 +1,8 @@
 package it.pagopa.wallet.scheduler
 
 import com.mongodb.reactivestreams.client.MongoClient
-import it.pagopa.wallet.scheduler.config.TestRedisConfiguration
 import de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration
+import it.pagopa.wallet.scheduler.config.TestRedisConfiguration
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
