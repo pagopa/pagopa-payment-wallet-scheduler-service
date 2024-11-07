@@ -67,12 +67,12 @@ class SchedulerLockService(
                     TimeUnit.SECONDS
                 )
             }
-            .switchIfEmpty { Mono.error(SemNotAcquiredException(jobName)) }
             .doOnSuccess { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }
-            .onErrorResume {
+            .onErrorMap {
                 logger.error("Semaphore acquiring error for job: {}", jobName, it)
-                Mono.error(SemNotAcquiredException(jobName, it))
+                SemNotAcquiredException(jobName, it)
             }
+            .switchIfEmpty { Mono.error(SemNotAcquiredException(jobName)) }
     }
 
     fun releaseJobSemaphore(jobName: String, semaphoreId: String): Mono<Void> {
