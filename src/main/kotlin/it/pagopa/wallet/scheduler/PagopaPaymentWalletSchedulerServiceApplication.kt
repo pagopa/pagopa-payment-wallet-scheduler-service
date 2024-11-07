@@ -1,5 +1,6 @@
 package it.pagopa.wallet.scheduler
 
+import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RetrySendPolicyConfig
@@ -10,6 +11,7 @@ import reactor.core.publisher.Hooks
 
 @SpringBootApplication
 @EnableConfigurationProperties(
+    WalletSearchConfig::class,
     CdcQueueConfig::class,
     RetrySendPolicyConfig::class,
     RedisResumePolicyConfig::class
