@@ -81,9 +81,9 @@ class SchedulerLockService(
             .getPermitExpirableSemaphore(redisJobLockPolicyConfig.getSemNameByJob(jobName))
             .release(semaphoreId)
             .doOnSuccess { logger.info("Semaphore released for job: {}", jobName) }
-            .onErrorResume {
+            .onErrorMap {
                 logger.error("Semaphore releasing error for job: {}", jobName, it)
-                Mono.error(SemNotReleasedException(jobName, it))
+                SemNotReleasedException(jobName, it)
             }
     }
 }
