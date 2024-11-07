@@ -1,30 +1,37 @@
-[
-  {
-    "_id": "fb02fa4f-351e-4eb7-b076-c6432a5f14b9",
-    "walletId": "ee3cdefc-5e3b-44cf-a835-fb0401004120",
-    "auditWallet": {
-      "paymentMethodId": "0d1450f4-b993-4f89-af5a-1770a45f5d71",
-      "creationDate": "2024-10-18T09:56:58.606169008Z",
-      "updateDate": "2024-10-18T09:57:20.970676022Z",
-      "applications": [
-        {
-          "_id": "PAGOPA",
-          "status": "ENABLED",
-          "creationDate": "2024-10-18T09:56:58.567973369Z",
-          "updateDate": "2024-10-18T09:56:58.567973656Z",
-          "metadata": {}
-        }
-      ],
-      "details": {
-        "type": "PAYPAL",
-        "pspId": "BCITITMM"
-      },
-      "status": "VALIDATED",
-      "validationOperationId": "234165405314242929",
-      "validationOperationResult": "EXECUTED",
-      "validationOperationTimestamp": "2024-10-18T09:57:19.704Z"
-    },
-    "timestamp": "2024-10-18T09:57:21.003287668Z",
-    "_class": "it.pagopa.wallet.audit.WalletOnboardCompletedEvent"
-  }
-]
+{
+  "_id": "00a06383-1495-4b90-88f6-80c5fecf554a",
+  "userId": "928bbaed-f7c2-41f9-b47c-9bce088322d6",
+  "status": "VALIDATED",
+  "paymentMethodId": "148ff003-46a6-4790-9376-b0e057352e45",
+  "contractId": "W171896465077471gI",
+  "applications": [
+    {
+      "_id": "PAGOPA",
+      "status": "ENABLED",
+      "creationDate": "2024-06-21T10:10:50.749146096Z",
+      "updateDate": "2024-06-21T10:10:50.749146096Z",
+      "metadata": {
+        "onboardByMigration": "2024-06-21T10:10:50.749146096Z"
+      }
+    }
+  ],
+  "details": {
+    "type": "CARDS",
+    "bin": "223059",
+    "lastFourDigits": "4353",
+    "expiryDate": "203204",
+    "brand": "MASTERCARD",
+    "paymentInstrumentGatewayId": "41795763745a7246744943674e6265776e6a50674c375555754447687534386b4a7574706a5975307030593d",
+    "_class": "it.pagopa.wallet.documents.wallets.details.CardDetails"
+  },
+  "clients": {
+    "IO": {
+      "status": "ENABLED"
+    }
+  },
+  "version": 2,
+  "creationDate": "2024-06-21T10:10:50.802632659Z",
+  "updateDate": "2024-06-21T10:34:18.850935581Z",
+  "onboardingChannel": "IO",
+  "_class": "it.pagopa.wallet.documents.wallets.Wallet"
+}
