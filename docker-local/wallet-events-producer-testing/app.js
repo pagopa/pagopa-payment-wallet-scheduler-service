@@ -10,7 +10,7 @@ async function main() {
         await client.connect();
 
         const database = client.db('payment-wallet');
-        const collection = database.collection('payment-wallets-log-events');
+        const collection = database.collection('payment-wallets');
 
         const filePath = path.join(__dirname, 'data.json');
         const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
