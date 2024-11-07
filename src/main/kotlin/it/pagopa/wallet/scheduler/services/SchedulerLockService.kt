@@ -46,9 +46,9 @@ class SchedulerLockService(
             .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
             .unlock()
             .doOnSuccess { logger.info("Lock released for job: {}", jobName) }
-            .onErrorResume {
+            .onErrorMap {
                 logger.error("Lock releasing error for job: {}", jobName, it)
-                Mono.error(LockNotReleasedException(jobName, it))
+                LockNotReleasedException(jobName, it)
             }
     }
 
