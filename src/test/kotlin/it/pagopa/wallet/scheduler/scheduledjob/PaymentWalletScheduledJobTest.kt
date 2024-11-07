@@ -33,9 +33,10 @@ class PaymentWalletScheduledJobTest {
     @Test
     fun `Should execute batch successfully`() {
         // pre-requisites
+        val jobId = "jobId"
         given(onboardedPaymentWalletJob.process(configuration = any()))
             .willReturn(mono { Instant.now().toString() })
-        given(onboardedPaymentWalletJob.id()).willReturn("jobId")
+        given(onboardedPaymentWalletJob.id()).willReturn(jobId)
         given(schedulerLockService.acquireJobSemaphore(any())).willReturn(mono { "semaphore-id" })
         given(schedulerLockService.releaseJobSemaphore(any(), any())).willReturn(null)
 
@@ -52,6 +53,7 @@ class PaymentWalletScheduledJobTest {
                         endDate = paymentWalletJobConfiguration.endDate
                     )
             )
+        verify(schedulerLockService, times(1)).acquireJobSemaphore(jobId)
     }
 
     @Test
