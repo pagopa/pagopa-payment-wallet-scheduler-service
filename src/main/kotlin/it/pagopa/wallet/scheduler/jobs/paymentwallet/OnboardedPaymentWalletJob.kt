@@ -1,6 +1,5 @@
 package it.pagopa.wallet.scheduler.jobs.paymentwallet
 
-import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.documents.wallets.details.CardDetails
 import it.pagopa.wallet.documents.wallets.details.PayPalDetails
 import it.pagopa.wallet.scheduler.common.cdc.AuditWallet
@@ -43,9 +42,9 @@ class OnboardedPaymentWalletJob(
         logger.info("Starting payment wallet processing in time window {} - {}", startDate, endDate)
         return walletService
             .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
-            .switchIfEmpty {
-                Flux.error<Wallet>(NoWalletFoundException(startDate = startDate, endDate = endDate))
-            }
+            .switchIfEmpty(
+                Flux.error(NoWalletFoundException(startDate = startDate, endDate = endDate))
+            )
             .map {
                 WalletOnboardCompletedEvent(
                     id = it.id,

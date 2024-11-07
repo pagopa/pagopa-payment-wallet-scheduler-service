@@ -17,7 +17,7 @@ class PaymentWalletScheduledJob(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(cron = "\${paymentWalletJob.execution.cron}")
+    @Scheduled(cron = "\${payment-wallet-job.execution.cron}")
     fun processOnboardedPaymentWallets() {
         val startTime = Instant.now()
         onboardedPaymentWalletJob
