@@ -35,10 +35,9 @@ class PaymentWalletScheduledJobTest {
         // pre-requisites
         given(onboardedPaymentWalletJob.process(configuration = any()))
             .willReturn(mono { Instant.now().toString() })
-        given(schedulerLockService.acquireJobSemaphore(any()))
-            .willReturn(mono { "semaphore-id" })
-        given(schedulerLockService.releaseJobSemaphore(any(), any()))
-            .willReturn(null)
+        given(onboardedPaymentWalletJob.id()).willReturn("jobId")
+        given(schedulerLockService.acquireJobSemaphore(any())).willReturn(mono { "semaphore-id" })
+        given(schedulerLockService.releaseJobSemaphore(any(), any())).willReturn(null)
 
         Hooks.onOperatorDebug()
 
