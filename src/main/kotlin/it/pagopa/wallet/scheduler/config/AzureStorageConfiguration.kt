@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import it.pagopa.wallet.client.WalletQueueClient
+import it.pagopa.wallet.scheduler.client.WalletQueueClient
 import it.pagopa.wallet.scheduler.common.cdc.LoggingEvent
 import it.pagopa.wallet.scheduler.common.serialization.LoggingEventMixin
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig
