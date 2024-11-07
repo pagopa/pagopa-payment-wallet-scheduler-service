@@ -1,4 +1,4 @@
-package it.pagopa.wallet.scheduler.service
+package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
@@ -13,8 +13,8 @@ import reactor.core.publisher.Flux
 
 @Service
 class WalletService(
-    @Autowired val walletRepository: WalletRepository,
-    @Autowired val walletSearchConfig: WalletSearchConfig
+    @Autowired private val walletRepository: WalletRepository,
+    @Autowired private val walletSearchConfig: WalletSearchConfig
 ) {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 

@@ -4,7 +4,6 @@ import it.pagopa.wallet.scheduler.WalletTestUtils
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.exceptions.WalletInvalidRangeException
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
-import it.pagopa.wallet.scheduler.service.WalletService
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals
@@ -24,7 +23,7 @@ class WalletServiceTest {
     fun `Should return wallets by valid date range`() {
         val startDate: Instant = Instant.now().minus(10, ChronoUnit.DAYS)
         val endDate: Instant = Instant.now()
-        val wallet = WalletTestUtils.walletDocument(walletSearchConfig.status)
+        val wallet = WalletTestUtils.paypalWalletDocument(walletSearchConfig.status)
 
         given {
                 walletRepository.findByCreationDateBetweenAndStatusOrderByUpdateDateAsc(
@@ -38,7 +37,7 @@ class WalletServiceTest {
                 Flux.just(
                     // generate one fixed wallet and other random wallet
                     wallet,
-                    WalletTestUtils.walletDocument(walletSearchConfig.status)
+                    WalletTestUtils.paypalWalletDocument(walletSearchConfig.status)
                 )
             )
 
