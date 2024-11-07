@@ -31,12 +31,12 @@ class SchedulerLockService(
                 TimeUnit.SECONDS
             )
             .filter { it == true } // only lock acquired
-            .switchIfEmpty { Mono.error(LockNotAcquiredException(jobName)) }
             .doOnSuccess { logger.info("Lock acquired for job: {}", jobName) }
-            .onErrorResume {
+            .onErrorMap {
                 logger.error("Lock acquiring error for job: {}", jobName, it)
-                Mono.error(LockNotAcquiredException(jobName, it))
+                LockNotAcquiredException(jobName, it)
             }
+            .switchIfEmpty { Mono.error(LockNotAcquiredException(jobName)) }
             .then()
     }
 
