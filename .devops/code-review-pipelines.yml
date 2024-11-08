@@ -91,12 +91,12 @@ stages:
               eventIdFromQueue=$(echo "s" | jq -r '._id')
               
               # Extract the expected event ID from the expected data
-              expectedEventId=$(echo "$expectedDataEvent" | jq -r '.[0]._id')
+              expectedEventId=$(echo "$expectedDataEvent" | jq -r '._id')
                 
               echo "EventIdFromQueue: $eventIdFromQueue"
               echo "ExpectedEventId: $expectedEventId"
               
-              # Compare the event IDs
+              # Compare the events
               if [ "$eventIdFromQueue" == "$expectedEventId" ]; then
                 echo "test passed successfully"
               else
