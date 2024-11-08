@@ -93,9 +93,6 @@ stages:
               eventDataFromQueue_1=$(echo $eventFromQueue_1 | jq -r '.data')
               eventDataFromQueue_2=$(echo $eventFromQueue_2 | jq -r '.data')
 
-              echo "Event1: $eventDataFromQueue_1"
-              echo "Event2: $eventDataFromQueue_2"
-
               # Use IDs to determine which event is which
               if [[ "$eventFromQueue_1" == *"00a06383-1495-4b90-88f6-80c5fecf554a"* ]]; then
                 eventDataFromQueueCards="$eventDataFromQueue_1"
@@ -121,7 +118,7 @@ stages:
               if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
                 echo "CARDS: test passed successfully"
               else
-                echo "fail! unexpected event"
+                echo "CARDS: fail! unexpected event"
                 exit 1
               fi
 
@@ -129,7 +126,7 @@ stages:
               if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
                 echo "PAYPAL: test passed successfully"
               else
-                echo "fail! unexpected event"
+                echo "PAYPAL: fail! unexpected event"
                 exit 1
               fi
             displayName: 'Get event from Azurite queue and validate'
