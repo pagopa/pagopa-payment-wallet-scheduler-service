@@ -88,7 +88,7 @@ stages:
               echo "ExpectedEventData: $expectedDataEvent"
 
               # Extract the event ID from the queue event
-              eventIdFromQueue=$(echo "s" | jq -r '._id')
+              eventIdFromQueue=$(echo "$eventDataFromQueue" | jq -r '._id')
               
               # Extract the expected event ID from the expected data
               expectedEventId=$(echo "$expectedDataEvent" | jq -r '._id')
