@@ -85,8 +85,8 @@ stages:
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
-              expectedDataEventCards=$(cat docker-local/integration-test/onboarding-wallet-card.json)
-              expectedDataEventPaypal=$(cat docker-local/integration-test/onboarding-wallet-paypal.json)
+              expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json)
+              expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json)
               
               echo "EventDataFromQueueCards: $eventFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
