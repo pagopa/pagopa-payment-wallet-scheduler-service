@@ -1,4 +1,8 @@
-[{
+//connect to Mongo DB
+conn = new Mongo();
+db = conn.getDB("payment-wallet");
+//create and populate payment wallets collection
+db.getCollection('payment-wallets').insertMany([{
   "_id": "00a06383-1495-4b90-88f6-80c5fecf554a",
   "userId": "928bbaed-f7c2-41f9-b47c-9bce088322d6",
   "status": "VALIDATED",
@@ -34,4 +38,4 @@
   "updateDate": "2024-06-21T10:34:18.850935581Z",
   "onboardingChannel": "IO",
   "_class": "it.pagopa.wallet.documents.wallets.Wallet"
-}]
+}]);

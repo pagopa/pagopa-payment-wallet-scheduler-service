@@ -17,9 +17,9 @@ services:
     container_name: mongodb
     image: mongo:6@sha256:28bf77ff23511baafb3262d7e6f5ae3634e784662e147ef4f6950a07a43c5eab
     restart: always
-    #command: [ "--replSet", "rs0", "--bind_ip_all", "--noauth", "--port", "27017"]
     ports:
       - "27017:27017"
+    env_file: ./docker-local/mongo/mongodb.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -29,19 +29,10 @@ services:
       start_period: 0s
       retries: 30
     volumes:
-      - data:/data/db
+      - ./docker-local/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - pagopa-wallet-scheduler-net
 
-  wallet-events-producer-testing:
-    build: docker-local/wallet-events-producer-testing
-    container_name: wallet-events-producer-testing
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - mongodb
-    networks:
-      - pagopa-wallet-scheduler-net
 
   pagopa-wallet-scheduler:
     container_name: pagopa-wallet-scheduler-service
