@@ -35,7 +35,7 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 2,
-        "creationDate": "2024-06-21T10:10:50.802632659Z",
+        "creationDate": "2024-10-24T07:50:49.995798539Z",
         "updateDate": "2024-06-21T10:34:18.850935581Z",
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
