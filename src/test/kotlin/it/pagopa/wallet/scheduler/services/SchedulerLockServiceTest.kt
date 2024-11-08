@@ -5,6 +5,8 @@ import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
 import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
+import java.util.concurrent.TimeUnit
+import kotlin.test.Test
 import kotlinx.coroutines.reactor.mono
 import org.mockito.ArgumentMatchers
 import org.mockito.kotlin.*
@@ -13,15 +15,15 @@ import org.redisson.api.RPermitExpirableSemaphoreReactive
 import org.redisson.api.RedissonReactiveClient
 import reactor.core.publisher.Mono
 import reactor.kotlin.test.test
-import java.util.concurrent.TimeUnit
-import kotlin.test.Test
 
 class SchedulerLockServiceTest {
     private val rLockReactive: RLockReactive = mock()
     private val rPermitExpirableSemaphoreReactive: RPermitExpirableSemaphoreReactive = mock()
     private val redissonClient: RedissonReactiveClient = mock()
-    private val redisJobLockPolicyConfig: RedisJobLockPolicyConfig = RedisJobLockPolicyConfig("keyspace", 20, 2)
-    private val schedulerLockService: SchedulerLockService = SchedulerLockService(redissonClient, redisJobLockPolicyConfig)
+    private val redisJobLockPolicyConfig: RedisJobLockPolicyConfig =
+        RedisJobLockPolicyConfig("keyspace", 20, 2)
+    private val schedulerLockService: SchedulerLockService =
+        SchedulerLockService(redissonClient, redisJobLockPolicyConfig)
 
     /*+ Lock tests **/
 
@@ -33,11 +35,7 @@ class SchedulerLockServiceTest {
         given(rLockReactive.tryLock(any(), any(), any())).willReturn(mono { true })
 
         // Test
-        schedulerLockService
-            .acquireJobLock(jobName)
-            .test()
-            .expectComplete()
-            .verify()
+        schedulerLockService.acquireJobLock(jobName).test().expectComplete().verify()
 
         // verifications
         verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
@@ -52,11 +50,7 @@ class SchedulerLockServiceTest {
         given(rLockReactive.unlock()).willReturn(Mono.empty())
 
         // Test
-        schedulerLockService
-            .releaseJobLock(jobName)
-            .test()
-            .expectComplete()
-            .verify()
+        schedulerLockService.releaseJobLock(jobName).test().expectComplete().verify()
 
         // verifications
         verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
@@ -99,7 +93,6 @@ class SchedulerLockServiceTest {
         verify(rLockReactive, times(1)).unlock()
     }
 
-
     /*+ Semaphore tests **/
 
     @Test
@@ -107,9 +100,11 @@ class SchedulerLockServiceTest {
         // pre-requisites
         val jobName = "job-name-semaphore"
         val semaphoreId = "semaphore-id"
-        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString())).willReturn(rPermitExpirableSemaphoreReactive)
+        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString()))
+            .willReturn(rPermitExpirableSemaphoreReactive)
         given(rPermitExpirableSemaphoreReactive.trySetPermits(any())).willReturn(mono { true })
-        given(rPermitExpirableSemaphoreReactive.tryAcquire(any(), any(), any())).willReturn(mono { semaphoreId })
+        given(rPermitExpirableSemaphoreReactive.tryAcquire(any(), any(), any()))
+            .willReturn(mono { semaphoreId })
 
         // Test
         schedulerLockService
@@ -129,8 +124,10 @@ class SchedulerLockServiceTest {
         // pre-requisites
         val jobName = "job-name-semaphore"
         val semaphoreId = "semaphore-id"
-        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString())).willReturn(rPermitExpirableSemaphoreReactive)
-        given(rPermitExpirableSemaphoreReactive.release(ArgumentMatchers.anyString())).willReturn(Mono.empty())
+        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString()))
+            .willReturn(rPermitExpirableSemaphoreReactive)
+        given(rPermitExpirableSemaphoreReactive.release(ArgumentMatchers.anyString()))
+            .willReturn(Mono.empty())
 
         // Test
         schedulerLockService
@@ -148,7 +145,8 @@ class SchedulerLockServiceTest {
     fun `Should throw SemNotAcquiredException when semaphore is already acquired`() {
         // pre-requisites
         val jobName = "job-name-semaphore"
-        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString())).willReturn(rPermitExpirableSemaphoreReactive)
+        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString()))
+            .willReturn(rPermitExpirableSemaphoreReactive)
         given(rPermitExpirableSemaphoreReactive.trySetPermits(1)).willReturn(Mono.just(true))
         given(rPermitExpirableSemaphoreReactive.tryAcquire(any(), any(), any()))
             .willReturn(Mono.error(RuntimeException("test")))
@@ -170,8 +168,10 @@ class SchedulerLockServiceTest {
         // pre-requisites
         val jobName = "job-name-semaphore"
         val semaphoreId = "semaphore-id"
-        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString())).willReturn(rPermitExpirableSemaphoreReactive)
-        given(rPermitExpirableSemaphoreReactive.release(ArgumentMatchers.anyString())).willThrow(RuntimeException::class.java)
+        given(redissonClient.getPermitExpirableSemaphore(ArgumentMatchers.anyString()))
+            .willReturn(rPermitExpirableSemaphoreReactive)
+        given(rPermitExpirableSemaphoreReactive.release(ArgumentMatchers.anyString()))
+            .willThrow(RuntimeException::class.java)
 
         // Test
         schedulerLockService
@@ -183,5 +183,4 @@ class SchedulerLockServiceTest {
         verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
         verify(rPermitExpirableSemaphoreReactive, times(1)).release(semaphoreId)
     }
-
 }
