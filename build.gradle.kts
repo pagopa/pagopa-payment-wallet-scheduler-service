@@ -12,7 +12,7 @@ plugins {
 
 group = "it.pagopa.wallet"
 
-version = "0.0.0"
+version = "0.1.0"
 
 description = "pagopa-payment-wallet-scheduler-service"
 
@@ -69,7 +69,6 @@ dependencies {
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
   testImplementation("io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64")
-  testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
