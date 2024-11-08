@@ -90,23 +90,6 @@ services:
     networks:
       - pagopa-wallet-scheduler-net
 
-  redis:
-    container_name: pagopa-wallet-scheduler-redis
-    image: redis@sha256:e422889e156ebea83856b6ff973bfe0c86bce867d80def228044eeecf925592b
-    command: [ "sh", "-c", 'exec redis-server --requirepass "$$REDIS_PASSWORD"' ]
-    ports:
-      - "6379:6379"
-    networks:
-      - pagopa-wallet-scheduler-net
-
-  redis-insight:
-    container_name: pagopa-wallet-scheduler-redis-insight
-    image: redislabs/redisinsight@sha256:bbfe06e00282fc051bbfadd49286865e75b359baea62f0d56af0cb0d5684b942
-    ports:
-      - "8001:8001"
-    networks:
-      - pagopa-wallet-scheduler-net
-
 networks:
   pagopa-wallet-scheduler-net:
     driver: bridge
