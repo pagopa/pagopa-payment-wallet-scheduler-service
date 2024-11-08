@@ -95,21 +95,20 @@ stages:
               
               echo "EventDataFromQueueCards: $eventDataFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
-
+              
+              echo "EventDataFromQueueCards: $eventDataFromQueuePaypal"
+              echo "ExpectedEventDataCards: $expectedDataEventPaypal"
               # Compare the events Cards
               if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
-                echo "test passed successfully"
+                echo "CARDS: test passed successfully"
               else
                 echo "fail! unexpected event"
                 exit 1
               fi
-              
-              echo "EventDataFromQueueCards: $eventDataFromQueuePaypal"
-              echo "ExpectedEventDataCards: $expectedDataEventPaypal"
-              
+                            
               # Compare the events Paypal
               if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
-                echo "test passed successfully"
+                echo "PAYPAL: test passed successfully"
               else
                 echo "fail! unexpected event"
                 exit 1
