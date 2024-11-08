@@ -85,6 +85,9 @@ stages:
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
+              eventDataFromQueueCards=$(echo $eventFromQueueCards | jq -r '.data')
+              eventDataFromQueuePaypal=$(echo $eventFromQueuePaypal | jq -r '.data')
+              
               expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json)
               expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json)
               
@@ -92,7 +95,7 @@ stages:
               echo "ExpectedEventDataCards: $expectedDataEventCards"
 
               # Compare the events Cards
-              if [ "$eventFromQueueCards" == "$expectedDataEventCards" ]; then
+              if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
                 echo "test passed successfully"
               else
                 echo "fail! unexpected event"
@@ -103,7 +106,7 @@ stages:
               echo "ExpectedEventDataCards: $expectedDataEventPaypal"
               
               # Compare the events Paypal
-              if [ "$eventFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
+              if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
                 echo "test passed successfully"
               else
                 echo "fail! unexpected event"
