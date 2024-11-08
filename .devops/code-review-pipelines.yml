@@ -97,10 +97,10 @@ stages:
               echo "ExpectedEventId: $expectedEventId"
               
               # Compare the event IDs
-                if [ "$eventIdFromQueue" == "$expectedEventId" ]; then
+              if [ "$eventIdFromQueue" == "$expectedEventId" ]; then
                 echo "test passed successfully"
-                else
+              else
                 echo "fail! unexpected event"
                 exit 1
-                fi
+              fi
             displayName: 'Get event from Azurite queue and validate'
