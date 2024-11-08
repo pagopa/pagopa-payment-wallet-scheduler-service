@@ -17,7 +17,7 @@ services:
     container_name: mongodb
     image: mongo:6@sha256:28bf77ff23511baafb3262d7e6f5ae3634e784662e147ef4f6950a07a43c5eab
     restart: always
-    command: [ "--replSet", "rs0", "--bind_ip_all", "--noauth", "--port", "27017"]
+    #command: [ "--replSet", "rs0", "--bind_ip_all", "--noauth", "--port", "27017"]
     ports:
       - "27017:27017"
     extra_hosts:
@@ -56,6 +56,7 @@ services:
       - mongodb
     networks:
       - pagopa-wallet-scheduler-net
+
   redis:
     container_name: wallet-redis
     image: redis@sha256:e422889e156ebea83856b6ff973bfe0c86bce867d80def228044eeecf925592b
