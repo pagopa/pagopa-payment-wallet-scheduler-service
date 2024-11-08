@@ -88,7 +88,7 @@ stages:
                 --output tsv --query '[0].content')
               
               eventDataFromQueue_1=$(echo $eventFromQueue_1 | jq -r '.data')
-              eventDataFromQueue_2=$(echo $eventFromQueue_1 | jq -r '.data')
+              eventDataFromQueue_2=$(echo $eventFromQueue_2 | jq -r '.data')
 
               # Check if eventDataFromQueue_1 is PayPal
               if echo "$eventDataFromQueue_1" | jq -e '.details.type == "PAYPAL"' > /dev/null; then
