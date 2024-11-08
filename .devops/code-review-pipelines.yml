@@ -75,29 +75,35 @@ stages:
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8400/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
             displayName: 'Health check pagopa-payment-wallet-scheduler-service'
           - script: |
-              eventFromQueue=$(az storage message peek \
+              eventFromQueueCards=$(az storage message get \
                 --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
-              expectedDataEvent=$(cat docker-local/mongo/data.json)
+              eventFromQueuePaypal=$(az storage message get \
+                --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
+                --queue-name pagopa-wallet-cdc-queue \
+                --output tsv --query '[0].content')
+              
+              expectedDataEventCards=$(cat docker-local/integration-test/onboarding-wallet-card.json)
+              expectedDataEventPaypal=$(cat docker-local/integration-test/onboarding-wallet-paypal.json)
+              
+              echo "EventDataFromQueueCards: $eventFromQueueCards"
+              echo "ExpectedEventDataCards: $expectedDataEventCards"
 
-              eventDataFromQueue=$(echo $eventFromQueue | jq -r '.data')
+              # Compare the events Cards
+              if [ "$eventFromQueueCards" == "$expectedDataEventCards" ]; then
+                echo "test passed successfully"
+              else
+                echo "fail! unexpected event"
+                exit 1
+              fi
               
-              echo "EventDataFromQueue: $eventDataFromQueue"
-              echo "ExpectedEventData: $expectedDataEvent"
-
-              # Extract the event ID from the queue event
-              eventIdFromQueue=$(echo "$eventDataFromQueue" | jq -r '._id')
+              echo "EventDataFromQueueCards: $eventFromQueuePaypal"
+              echo "ExpectedEventDataCards: $expectedDataEventPaypal"
               
-              # Extract the expected event ID from the expected data
-              expectedEventId=$(echo "$expectedDataEvent" | jq -r '._id')
-                
-              echo "EventIdFromQueue: $eventIdFromQueue"
-              echo "ExpectedEventId: $expectedEventId"
-              
-              # Compare the events
-              if [ "$eventIdFromQueue" == "$expectedEventId" ]; then
+              # Compare the events Paypal
+              if [ "$eventFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
                 echo "test passed successfully"
               else
                 echo "fail! unexpected event"
