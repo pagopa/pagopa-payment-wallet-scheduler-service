@@ -80,7 +80,7 @@ stages:
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
-              expectedDataEvent=$(cat docker-local/wallet-events-producer-testing/data.json)
+              expectedDataEvent=$(cat docker-local/mongo/data.json)
 
               eventDataFromQueue=$(echo $eventFromQueue | jq -r '.data')
               
