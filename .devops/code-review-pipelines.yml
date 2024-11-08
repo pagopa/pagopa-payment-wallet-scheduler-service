@@ -1,3 +1,4 @@
+
 variables:
   BRANCH_NAME: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
   GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
@@ -60,3 +61,72 @@ stages:
               summaryFileLocation: 'build/reports/jacoco/test/jacocoTestReport.xml'
               reportDirectory: 'build/reports/jacoco/test/html'
             displayName: 'Publish Code Coverage on Azure Devops'
+
+  - stage: IntegrationTest
+    dependsOn: [ ]
+    jobs:
+      - job: Integration_Test
+        steps:
+          - script: cp .env.local .env
+            displayName: 'Setup env'
+          - script: docker compose up -d
+            displayName: 'Run app with docker-compose'
+          - script: |
+              timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8400/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
+            displayName: 'Health check pagopa-payment-wallet-scheduler-service'
+          - script: |
+              sleep 15
+              
+              # Get the first event from the queue
+              eventFromQueue_1=$(az storage message get \
+                --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
+                --queue-name pagopa-wallet-cdc-queue \
+                --output tsv --query '[0].content')
+              
+              # Get the second event from the queue
+              eventFromQueue_2=$(az storage message get \
+                --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
+                --queue-name pagopa-wallet-cdc-queue \
+                --output tsv --query '[0].content')
+              
+              # Extract data from both events
+              eventDataFromQueue_1=$(echo "$eventFromQueue_1" | jq -c '.data')
+              eventDataFromQueue_2=$(echo "$eventFromQueue_2" | jq -c '.data')
+              
+              # Use IDs to determine which event is which
+              if [[ "$eventFromQueue_1" == *"00a06383-1495-4b90-88f6-80c5fecf554a"* ]]; then
+                eventDataFromQueueCards="$eventDataFromQueue_1"
+                eventDataFromQueuePaypal="$eventDataFromQueue_2"
+              elif [[ "$eventFromQueue_1" == *"a0a27446-e6d8-47d2-8786-ca393f19c30b"* ]]; then
+                eventDataFromQueuePaypal="$eventDataFromQueue_1"
+                eventDataFromQueueCards="$eventDataFromQueue_2"
+              else
+                echo "Unexpected event ID in eventFromQueue_1"
+                exit 1
+              fi
+              
+              expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json | jq -c .)
+              expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json | jq -c .)
+              
+              echo "EventDataFromQueueCards: $eventDataFromQueueCards"
+              echo "ExpectedEventDataCards: $expectedDataEventCards"
+              
+              echo "EventDataFromQueuePaypal: $eventDataFromQueuePaypal"
+              echo "ExpectedEventDataPaypal: $expectedDataEventPaypal"
+              
+              # Compare the events Cards
+              if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
+                echo "CARDS: test passed successfully"
+              else
+                echo "CARDS: fail! unexpected event"
+                exit 1
+              fi
+              
+              # Compare the events Paypal
+              if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
+                echo "PAYPAL: test passed successfully"
+              else
+                echo "PAYPAL: fail! unexpected event"
+                exit 1
+              fi
+            displayName: 'Get event from Azurite queue and validate'
