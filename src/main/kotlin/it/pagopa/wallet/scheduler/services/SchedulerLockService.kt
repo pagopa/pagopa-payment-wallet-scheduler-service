@@ -20,7 +20,7 @@ class SchedulerLockService(
 ) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun acquireJobLock(jobName: String): Mono<Void> {
+    fun acquireJobLock(jobName: String): Mono<Unit> {
         logger.info("Trying to acquire lock for job: {}", jobName)
         return redissonClient
             .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
@@ -36,10 +36,10 @@ class SchedulerLockService(
                 LockNotAcquiredException(jobName, it)
             }
             .switchIfEmpty(Mono.error(LockNotAcquiredException(jobName)))
-            .then()
+            .thenReturn(Unit)
     }
 
-    fun releaseJobLock(jobName: String): Mono<Void> {
+    fun releaseJobLock(jobName: String): Mono<Unit> {
         logger.info("Trying to release lock for job: {}", jobName)
         return redissonClient
             .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
@@ -49,6 +49,7 @@ class SchedulerLockService(
                 logger.error("Lock releasing error for job: {}", jobName, it)
                 LockNotReleasedException(jobName, it)
             }
+            .thenReturn(Unit)
     }
 
     fun acquireJobSemaphore(jobName: String): Mono<String> {
@@ -75,7 +76,7 @@ class SchedulerLockService(
             .switchIfEmpty(Mono.error(SemNotAcquiredException(jobName)))
     }
 
-    fun releaseJobSemaphore(jobName: String, semaphoreId: String): Mono<Void> {
+    fun releaseJobSemaphore(jobName: String, semaphoreId: String): Mono<Unit> {
         logger.info("Trying to release semaphore for job: {}", jobName)
         return redissonClient
             .getPermitExpirableSemaphore(redisJobLockPolicyConfig.getSemNameByJob(jobName))
@@ -85,6 +86,6 @@ class SchedulerLockService(
                 logger.error("Semaphore releasing error for job: {}", jobName, it)
                 SemNotReleasedException(jobName, it)
             }
-            .then()
+            .thenReturn(Unit)
     }
 }
