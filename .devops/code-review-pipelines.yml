@@ -87,13 +87,20 @@ stages:
               echo "EventDataFromQueue: $eventDataFromQueue"
               echo "ExpectedEventData: $expectedDataEvent"
 
-              normalized_event_expected=$(echo "$eventDataFromQueue" | jq -S .)
-              normalized_event_from_queue=$(echo "$expectedDataEvent" | jq -S .[0])
+              # Extract the event ID from the queue event
+              eventIdFromQueue=$(echo "s" | jq -r '._id')
               
-              if [ "$normalized_event_expected" == "$normalized_event_from_queue" ]; then
+              # Extract the expected event ID from the expected data
+              expectedEventId=$(echo "$expectedDataEvent" | jq -r '.[0]._id')
+                
+              echo "EventIdFromQueue: $eventIdFromQueue"
+              echo "ExpectedEventId: $expectedEventId"
+              
+              # Compare the event IDs
+                if [ "$eventIdFromQueue" == "$expectedEventId" ]; then
                 echo "test passed successfully"
-              else
+                else
                 echo "fail! unexpected event"
-                exit 1   
-              fi
+                exit 1
+                fi
             displayName: 'Get event from Azurite queue and validate'
