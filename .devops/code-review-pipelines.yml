@@ -77,27 +77,36 @@ stages:
           - script: |
               sleep 15
               
-              eventFromQueuePaypal=$(az storage message get \
+              eventFromQueue_1=$(az storage message get \
                 --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
-              eventFromQueueCards=$(az storage message get \
+              eventFromQueue_1=$(az storage message get \
                 --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
-              eventDataFromQueueCards=$(echo $eventFromQueueCards | jq -r '.data')
-              eventDataFromQueuePaypal=$(echo $eventFromQueuePaypal | jq -r '.data')
-              
+              eventDataFromQueue_1=$(echo $eventFromQueue_1 | jq -r '.data')
+              eventDataFromQueue_2=$(echo $eventFromQueue_1 | jq -r '.data')
+
+              # Check if eventDataFromQueue_1 is PayPal
+              if echo "$eventDataFromQueue_1" | jq -e '.details.type == "PAYPAL"' > /dev/null; then
+                eventDataFromQueuePaypal="$eventDataFromQueue_1"
+                eventDataFromQueueCards="$eventDataFromQueue_2"
+              else
+                eventDataFromQueueCards="$eventDataFromQueue_1"
+                eventDataFromQueuePaypal="$eventDataFromQueue_2"
+              fi
               expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json)
               expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json)
               
               echo "EventDataFromQueueCards: $eventDataFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
               
-              echo "EventDataFromQueueCards: $eventDataFromQueuePaypal"
-              echo "ExpectedEventDataCards: $expectedDataEventPaypal"
+              echo "EventDataFromQueuePaypal: $eventDataFromQueuePaypal"
+              echo "ExpectedEventDataPaypal: $expectedDataEventPaypal"
+              
               # Compare the events Cards
               if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
                 echo "CARDS: test passed successfully"
