@@ -5,14 +5,13 @@ import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
 import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
-import java.util.concurrent.TimeUnit
 import org.redisson.api.RedissonReactiveClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
+import java.util.concurrent.TimeUnit
 
 @Service
 class SchedulerLockService(

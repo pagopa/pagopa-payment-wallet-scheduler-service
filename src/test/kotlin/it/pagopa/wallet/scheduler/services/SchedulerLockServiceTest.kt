@@ -5,10 +5,11 @@ import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
 import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
 import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
-import kotlin.test.Test
 import org.junit.jupiter.api.BeforeAll
 import org.mockito.ArgumentMatchers
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.given
+import org.mockito.kotlin.mock
 import org.redisson.Redisson
 import org.redisson.api.RLockReactive
 import org.redisson.api.RPermitExpirableSemaphoreReactive
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 import reactor.kotlin.test.test
 import redis.embedded.RedisServer
+import kotlin.test.Test
 
 class SchedulerLockServiceTest {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
