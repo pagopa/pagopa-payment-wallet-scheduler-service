@@ -1,11 +1,11 @@
 {
   "_class": "it.pagopa.wallet.audit.WalletOnboardCompletedEvent",
   "_id": "00a06383-1495-4b90-88f6-80c5fecf554a",
-  "timestamp": "2024-06-21T10:10:50.802632659Z",
+  "timestamp": "2024-10-24T07:50:49.995798539Z",
   "walletId": "00a06383-1495-4b90-88f6-80c5fecf554a",
   "auditWallet": {
     "paymentMethodId": "148ff003-46a6-4790-9376-b0e057352e45",
-    "creationDate": "2024-06-21T10:10:50.802632659Z",
+    "creationDate": "2024-10-24T07:50:49.995798539Z",
     "updateDate": "2024-06-21T10:34:18.850935581Z",
     "applications": [
       {
@@ -26,7 +26,7 @@
     "status": "VALIDATED",
     "validationOperationId": null,
     "validationOperationResult": null,
-    "validationOperationTimestamp": "2024-06-21T10:10:50.802632659Z",
+    "validationOperationTimestamp": "2024-10-24T07:50:49.995798539Z",
     "validationErrorCode": null
   }
 }
