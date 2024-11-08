@@ -83,13 +83,11 @@ stages:
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
 
-              sleep 2
-
               # Get the second event from the queue
               eventFromQueue_2=$(az storage message get \
                 --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
                 --queue-name pagopa-wallet-cdc-queue \
-                --output tsv --query '[1].content')
+                --output tsv --query '[0].content')
 
               # Extract data from both events
               eventDataFromQueue_1=$(echo $eventFromQueue_1 | jq -r '.data')
