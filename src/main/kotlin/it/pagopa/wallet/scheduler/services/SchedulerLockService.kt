@@ -59,6 +59,7 @@ class SchedulerLockService(
             )
         return semaphore
             .trySetPermits(1)
+            .filter { it == true } // set permit success
             .flatMap {
                 semaphore.tryAcquire(
                     redisJobLockPolicyConfig.waitTimeSec,
@@ -83,6 +84,6 @@ class SchedulerLockService(
             .onErrorMap {
                 logger.error("Semaphore releasing error for job: {}", jobName, it)
                 SemNotReleasedException(jobName, it)
-            }
+            }.then()
     }
 }
