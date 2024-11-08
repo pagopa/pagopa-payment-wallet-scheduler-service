@@ -20,7 +20,7 @@ import org.springframework.test.context.TestPropertySource
 @EnableAutoConfiguration(
     exclude = [EmbeddedMongoAutoConfiguration::class, RedissonAutoConfigurationV2::class]
 )
-class WalletSearchConfigTest {
+class WalletSchedulerConfigsTest {
     @MockBean private lateinit var mongoClient: MongoClient
     @MockBean private lateinit var redissonReactiveClient: RedissonReactiveClient
 
