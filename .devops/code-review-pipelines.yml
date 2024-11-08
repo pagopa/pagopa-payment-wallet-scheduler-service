@@ -76,23 +76,23 @@ stages:
             displayName: 'Health check pagopa-payment-wallet-scheduler-service'
           - script: |
               sleep 15
-
+              
               # Get the first event from the queue
               eventFromQueue_1=$(az storage message get \
                 --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
-
+              
               # Get the second event from the queue
               eventFromQueue_2=$(az storage message get \
                 --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://localhost:10001/devstoreaccount1" \
                 --queue-name pagopa-wallet-cdc-queue \
                 --output tsv --query '[0].content')
-
+              
               # Extract data from both events
-              eventDataFromQueue_1=$(echo $eventFromQueue_1 | jq -r '.data')
-              eventDataFromQueue_2=$(echo $eventFromQueue_2 | jq -r '.data')
-
+              eventDataFromQueue_1=$(echo "$eventFromQueue_1" | jq -c '.data')
+              eventDataFromQueue_2=$(echo "$eventFromQueue_2" | jq -c '.data')
+              
               # Use IDs to determine which event is which
               if [[ "$eventFromQueue_1" == *"00a06383-1495-4b90-88f6-80c5fecf554a"* ]]; then
                 eventDataFromQueueCards="$eventDataFromQueue_1"
@@ -104,16 +104,16 @@ stages:
                 echo "Unexpected event ID in eventFromQueue_1"
                 exit 1
               fi
-
-              expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json)
-              expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json)
-
+              
+              expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json | jq -c .)
+              expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json | jq -c .)
+              
               echo "EventDataFromQueueCards: $eventDataFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
-
+              
               echo "EventDataFromQueuePaypal: $eventDataFromQueuePaypal"
               echo "ExpectedEventDataPaypal: $expectedDataEventPaypal"
-
+              
               # Compare the events Cards
               if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
                 echo "CARDS: test passed successfully"
@@ -121,7 +121,7 @@ stages:
                 echo "CARDS: fail! unexpected event"
                 exit 1
               fi
-
+              
               # Compare the events Paypal
               if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
                 echo "PAYPAL: test passed successfully"
