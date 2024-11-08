@@ -91,7 +91,7 @@ stages:
               expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json)
               expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json)
               
-              echo "EventDataFromQueueCards: $eventFromQueueCards"
+              echo "EventDataFromQueueCards: $eventDataFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
 
               # Compare the events Cards
@@ -102,7 +102,7 @@ stages:
                 exit 1
               fi
               
-              echo "EventDataFromQueueCards: $eventFromQueuePaypal"
+              echo "EventDataFromQueueCards: $eventDataFromQueuePaypal"
               echo "ExpectedEventDataCards: $expectedDataEventPaypal"
               
               # Compare the events Paypal
