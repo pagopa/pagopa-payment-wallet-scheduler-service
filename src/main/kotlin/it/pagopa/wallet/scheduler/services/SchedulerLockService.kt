@@ -60,7 +60,6 @@ class SchedulerLockService(
             )
         return semaphore
             .trySetPermits(1)
-            .filter { it == true } // set permit success
             .flatMap {
                 semaphore.tryAcquire(
                     redisJobLockPolicyConfig.waitTimeSec,
@@ -68,6 +67,7 @@ class SchedulerLockService(
                     TimeUnit.SECONDS
                 )
             }
+            .filter { it != null }
             .doOnSuccess { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }
             .onErrorMap {
                 logger.error("Semaphore acquiring error for job: {}", jobName, it)
