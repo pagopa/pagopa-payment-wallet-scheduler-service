@@ -25,8 +25,7 @@ class PaymentWalletScheduledJob(
         schedulerLockService
             .acquireJobSemaphore(jobName = onboardedPaymentWalletJob.id())
             .doOnError { logger.error("Unable to start job without semaphore acquiring", it) }
-            .flatMap {
-                val semaphoreId = it
+            .flatMap { semaphoreId ->
                 onboardedPaymentWalletJob
                     .process(
                         OnboardedPaymentWalletJobConfiguration(
