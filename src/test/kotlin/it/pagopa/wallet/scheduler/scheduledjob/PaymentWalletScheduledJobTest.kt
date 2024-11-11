@@ -5,13 +5,13 @@ import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
 import it.pagopa.wallet.scheduler.jobs.config.OnboardedPaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.jobs.paymentwallet.OnboardedPaymentWalletJob
 import it.pagopa.wallet.scheduler.service.SchedulerLockService
+import java.time.Duration
+import java.time.Instant
 import kotlinx.coroutines.reactor.mono
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
 import reactor.core.publisher.Mono
-import java.time.Duration
-import java.time.Instant
 
 class PaymentWalletScheduledJobTest {
     private val startDate = Instant.now()
@@ -89,7 +89,8 @@ class PaymentWalletScheduledJobTest {
         // pre-requisites
         val jobId = "jobId"
         given(onboardedPaymentWalletJob.id()).willReturn(jobId)
-        given(schedulerLockService.acquireJobSemaphore(any())).willReturn(Mono.error(SemNotAcquiredException("jobName")))
+        given(schedulerLockService.acquireJobSemaphore(any()))
+            .willReturn(Mono.error(SemNotAcquiredException("jobName")))
 
         // Test
         paymentWalletScheduledJob.processOnboardedPaymentWallets()
