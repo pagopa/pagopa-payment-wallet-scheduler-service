@@ -34,7 +34,7 @@ class SchedulerLockServiceTest {
         given(rLockReactive.tryLock(any(), any(), any())).willReturn(mono { true })
 
         // Test
-        schedulerLockService.acquireJobLock(jobName).test().expectComplete().verify()
+        schedulerLockService.acquireJobLock(jobName).test().expectNext(Unit).verifyComplete()
 
         // verifications
         verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
@@ -49,7 +49,7 @@ class SchedulerLockServiceTest {
         given(rLockReactive.unlock()).willReturn(Mono.empty())
 
         // Test
-        schedulerLockService.releaseJobLock(jobName).test().expectComplete().verify()
+        schedulerLockService.releaseJobLock(jobName).test().expectNext(Unit).verifyComplete()
 
         // verifications
         verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
@@ -133,8 +133,8 @@ class SchedulerLockServiceTest {
         schedulerLockService
             .releaseJobSemaphore(jobName, semaphoreId)
             .test()
-            .expectComplete()
-            .verify()
+            .expectNext(Unit)
+            .verifyComplete()
 
         // verifications
         verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
