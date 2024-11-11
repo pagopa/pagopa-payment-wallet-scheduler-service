@@ -98,6 +98,9 @@ microservice-chart:
     WALLET_SEARCH_LIMIT: "20"
     SCHEDULER_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler"
     SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "120"
+    SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks"
+    SCHEDULER_REDIS_JOB_LOCK_TTL_SEC: "20"
+    SCHEDULER_REDIS_JOB_LOCK_WAIT_TIME_SEC: "1"
     REDIS_HOST: pagopa-d-itn-pay-wallet-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
