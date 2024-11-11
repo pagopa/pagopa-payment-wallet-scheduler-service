@@ -1,9 +1,9 @@
 package it.pagopa.wallet.services
 
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
-import it.pagopa.wallet.scheduler.service.RedisResumePolicyService
-import it.pagopa.wallet.scheduler.service.ResumePolicyService
-import it.pagopa.wallet.scheduler.service.TimestampRedisTemplate
+import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
+import it.pagopa.wallet.scheduler.services.ResumePolicyService
+import it.pagopa.wallet.scheduler.services.TimestampRedisTemplate
 import java.time.Instant
 import java.util.*
 import org.junit.jupiter.api.Assertions

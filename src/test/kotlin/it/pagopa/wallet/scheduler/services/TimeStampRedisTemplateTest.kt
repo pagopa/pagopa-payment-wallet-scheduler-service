@@ -1,6 +1,6 @@
 package it.pagopa.wallet.services
 
-import it.pagopa.wallet.scheduler.service.TimestampRedisTemplate
+import it.pagopa.wallet.scheduler.services.TimestampRedisTemplate
 import java.time.Duration
 import java.time.Instant
 import org.junit.jupiter.api.Assertions
