@@ -10,14 +10,18 @@ import it.pagopa.wallet.scheduler.common.cdc.WalletOnboardCompletedEvent
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.jobs.config.OnboardedPaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.services.CdcEventDispatcherService
+import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.WalletService
 import java.time.Duration
 import java.time.Instant
+import java.util.*
 import kotlin.test.assertEquals
 import kotlinx.coroutines.reactor.mono
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
 import reactor.core.publisher.Flux
 import reactor.test.StepVerifier
@@ -28,10 +32,13 @@ class OnboardedPaymentWalletJobTest {
 
     private val cdcEventDispatcherService: CdcEventDispatcherService = mock()
 
+    private val redisResumePolicyService: RedisResumePolicyService = mock()
+
     private val onboardedPaymentWalletJob =
         OnboardedPaymentWalletJob(
             walletService = walletService,
-            cdcEventDispatcherService = cdcEventDispatcherService
+            cdcEventDispatcherService = cdcEventDispatcherService,
+            redisResumePolicyService = redisResumePolicyService
         )
 
     @Test
@@ -187,5 +194,61 @@ class OnboardedPaymentWalletJobTest {
         verify(walletService, times(1))
             .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
         verify(cdcEventDispatcherService, times(0)).dispatchEvent(event = any())
+    }
+
+    @Test
+    fun `should perform checkpoint successfully`() {
+        // pre-requisites
+        val startDate = Instant.now()
+        val endDate = startDate + Duration.ofSeconds(10)
+        val jobConf =
+            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
+        val foundWallets = listOf(wallet)
+        given(walletService.getWalletsForCdcIngestion(any(), any()))
+            .willReturn(Flux.fromIterable(foundWallets))
+        given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
+            mono { it.arguments[0] }
+        }
+        doNothing()
+            .`when`(redisResumePolicyService)
+            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
+        // Test
+        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
+            .expectNext(foundWallets.last().creationDate.toString())
+            .verifyComplete()
+        verify(redisResumePolicyService, times(1))
+            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
+    }
+
+    @Test
+    fun `should start from checkpoint successfully`() {
+        // pre-requisites
+        val startDate = Instant.now()
+        val endDate = startDate + Duration.ofSeconds(10)
+        val jobConf =
+            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
+        val foundWallets = listOf(wallet)
+        val checkpoint = wallet.creationDate + Duration.ofSeconds(1)
+        given(walletService.getWalletsForCdcIngestion(any(), any()))
+            .willReturn(Flux.fromIterable(foundWallets))
+        given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
+            mono { it.arguments[0] }
+        }
+        given(redisResumePolicyService.getResumeTimestamp(any())).willAnswer {
+            Optional.of(checkpoint)
+        }
+
+        doNothing()
+            .`when`(redisResumePolicyService)
+            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
+        // Test
+        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
+            .expectNext(foundWallets.last().creationDate.toString())
+            .verifyComplete()
+        verify(redisResumePolicyService, times(1))
+            .getResumeTimestamp(eq(onboardedPaymentWalletJob.id()))
+        verify(walletService, times(1)).getWalletsForCdcIngestion(eq(checkpoint), eq(endDate))
     }
 }
