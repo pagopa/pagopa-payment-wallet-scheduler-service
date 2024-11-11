@@ -30,7 +30,7 @@ class SchedulerLockService(
                 TimeUnit.SECONDS
             )
             .filter { it == true } // only lock acquired
-            .doOnSuccess { logger.info("Lock acquired for job: {}", jobName) }
+            .doOnNext { logger.info("Lock acquired for job: {}", jobName) }
             .onErrorMap {
                 logger.error("Lock acquiring error for job: {}", jobName, it)
                 LockNotAcquiredException(jobName, it)
@@ -67,8 +67,7 @@ class SchedulerLockService(
                     TimeUnit.SECONDS
                 )
             }
-            .filter { it != null }
-            .doOnSuccess { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }
+            .doOnNext { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }
             .onErrorMap {
                 logger.error("Semaphore acquiring error for job: {}", jobName, it)
                 SemNotAcquiredException(jobName, it)
