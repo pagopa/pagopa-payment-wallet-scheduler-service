@@ -44,7 +44,7 @@ class PaymentWalletScheduledJobTest {
         // Test
         paymentWalletScheduledJob.processOnboardedPaymentWallets()
         // verifications
-        verify(onboardedPaymentWalletJob, times(1)).id()
+        verify(onboardedPaymentWalletJob, after(1000).times(2)).id()
         verify(onboardedPaymentWalletJob, after(1000).times(1))
             .process(
                 configuration =
@@ -71,7 +71,7 @@ class PaymentWalletScheduledJobTest {
         // Test
         assertDoesNotThrow { paymentWalletScheduledJob.processOnboardedPaymentWallets() }
         // verifications
-        verify(onboardedPaymentWalletJob, times(1)).id()
+        verify(onboardedPaymentWalletJob, after(1000).times(2)).id()
         verify(onboardedPaymentWalletJob, after(1000).times(1))
             .process(
                 configuration =
