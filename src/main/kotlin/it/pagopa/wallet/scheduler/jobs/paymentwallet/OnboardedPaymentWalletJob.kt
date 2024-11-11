@@ -1,5 +1,6 @@
 package it.pagopa.wallet.scheduler.jobs.paymentwallet
 
+import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.documents.wallets.details.CardDetails
 import it.pagopa.wallet.documents.wallets.details.PayPalDetails
 import it.pagopa.wallet.scheduler.common.cdc.AuditWallet
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 
 /**
  * Payment wallet job: this job will scan all payment wallets in the given configuration retrieving
@@ -37,70 +39,29 @@ class OnboardedPaymentWalletJob(
         val startDate = configuration.startDate
         val endDate = configuration.endDate
         logger.info("Starting payment wallet processing in time window {} - {}", startDate, endDate)
-        return walletService
-            .getWalletsForCdcIngestion(
-                startDate = redisResumePolicyService.getResumeTimestamp(id()).orElse(startDate),
-                endDate = endDate
-            )
+        return Mono.fromCallable { redisResumePolicyService.getResumeTimestamp(id()) }
+            .subscribeOn(Schedulers.boundedElastic())
+            .flatMapMany {
+                walletService.getWalletsForCdcIngestion(
+                    startDate = it.orElse(startDate),
+                    endDate = endDate
+                )
+            }
             .switchIfEmpty(
                 Flux.error(NoWalletFoundException(startDate = startDate, endDate = endDate))
             )
-            .map {
-                WalletOnboardCompletedEvent(
-                    id = it.id,
-                    timestamp = it.creationDate.toString(),
-                    walletId = it.id,
-                    auditWallet =
-                        AuditWallet(
-                            paymentMethodId = it.paymentMethodId,
-                            creationDate = it.creationDate.toString(),
-                            updateDate = it.updateDate.toString(),
-                            applications =
-                                it.applications.map { application ->
-                                    AuditWalletApplication(
-                                        id = application.id,
-                                        creationDate = application.creationDate,
-                                        updateDate = application.updateDate,
-                                        metadata = application.metadata,
-                                        status = application.status
-                                    )
-                                },
-                            details =
-                                it.details?.let { walletDetails ->
-                                    when (walletDetails) {
-                                        is CardDetails ->
-                                            AuditWalletDetails(
-                                                type = "CARDS", // TODO check this value
-                                                cardBrand = walletDetails.brand,
-                                                pspId = null
-                                            )
-                                        is PayPalDetails ->
-                                            AuditWalletDetails(
-                                                type = "PAYPAL", // TODO check this value
-                                                cardBrand = null,
-                                                pspId = walletDetails.pspId
-                                            )
-                                    }
-                                },
-                            status = it.status,
-                            validationOperationId = null, // TODO is ok to pass it as null here?
-                            validationOperationResult = it.validationOperationResult,
-                            validationOperationTimestamp =
-                                it.creationDate
-                                    .toString(), // use the wallet creation date as validation
-                            // operation timestamp
-                            validationErrorCode = it.validationErrorCode,
-                        )
-                )
-            }
+            .map { getWalletOnboardCompletedEvent(it) }
             .flatMap { cdcEventDispatcherService.dispatchEvent(it) }
             .collectList()
             .flatMap {
-                redisResumePolicyService.saveResumeTimestamp(
-                    id(),
-                    Instant.parse(it.last().timestamp)
-                )
-                return@flatMap Mono.just(it.last().timestamp)
+                Mono.fromCallable {
+                        redisResumePolicyService.saveResumeTimestamp(
+                            id(),
+                            Instant.parse(it.last().timestamp)
+                        )
+                    }
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .thenReturn(it.last().timestamp)
             }
             .doOnError {
                 logger.error(
@@ -108,5 +69,54 @@ class OnboardedPaymentWalletJob(
                     it
                 )
             }
+    }
+
+    private fun getWalletOnboardCompletedEvent(wallet: Wallet): WalletOnboardCompletedEvent {
+        return WalletOnboardCompletedEvent(
+            id = wallet.id,
+            timestamp = wallet.creationDate.toString(),
+            walletId = wallet.id,
+            auditWallet =
+                AuditWallet(
+                    paymentMethodId = wallet.paymentMethodId,
+                    creationDate = wallet.creationDate.toString(),
+                    updateDate = wallet.updateDate.toString(),
+                    applications =
+                        wallet.applications.map { application ->
+                            AuditWalletApplication(
+                                id = application.id,
+                                creationDate = application.creationDate,
+                                updateDate = application.updateDate,
+                                metadata = application.metadata,
+                                status = application.status
+                            )
+                        },
+                    details =
+                        wallet.details?.let { walletDetails ->
+                            when (walletDetails) {
+                                is CardDetails ->
+                                    AuditWalletDetails(
+                                        type = "CARDS", // TODO check this value
+                                        cardBrand = walletDetails.brand,
+                                        pspId = null
+                                    )
+                                is PayPalDetails ->
+                                    AuditWalletDetails(
+                                        type = "PAYPAL", // TODO check this value
+                                        cardBrand = null,
+                                        pspId = walletDetails.pspId
+                                    )
+                            }
+                        },
+                    status = wallet.status,
+                    validationOperationId = null, // TODO is ok to pass it as null here?
+                    validationOperationResult = wallet.validationOperationResult,
+                    validationOperationTimestamp =
+                        wallet.creationDate
+                            .toString(), // use the wallet creation date as validation
+                    // operation timestamp
+                    validationErrorCode = wallet.validationErrorCode,
+                )
+        )
     }
 }
