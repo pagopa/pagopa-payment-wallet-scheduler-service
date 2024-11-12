@@ -25,9 +25,9 @@ class SchedulerLockService(
         return redissonClient
             .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
             .tryLock(
-                redisJobLockPolicyConfig.waitTimeSec,
+                redisJobLockPolicyConfig.waitTimeMs,
                 redisJobLockPolicyConfig.ttlSec,
-                TimeUnit.SECONDS
+                TimeUnit.MILLISECONDS
             )
             .filter { it == true } // only lock acquired
             .doOnNext { logger.info("Lock acquired for job: {}", jobName) }
@@ -62,9 +62,9 @@ class SchedulerLockService(
             .trySetPermits(1)
             .flatMap {
                 semaphore.tryAcquire(
-                    redisJobLockPolicyConfig.waitTimeSec,
+                    redisJobLockPolicyConfig.waitTimeMs,
                     redisJobLockPolicyConfig.ttlSec,
-                    TimeUnit.SECONDS
+                    TimeUnit.MILLISECONDS
                 )
             }
             .doOnNext { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }

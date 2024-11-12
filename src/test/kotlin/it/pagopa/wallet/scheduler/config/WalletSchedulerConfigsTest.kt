@@ -34,6 +34,6 @@ class WalletSchedulerConfigsTest {
         Assertions.assertEquals(walletSearchConfig.limit, 10)
         Assertions.assertEquals(redisJobLockPolicyConfig.keyspace, "keyspace")
         Assertions.assertEquals(redisJobLockPolicyConfig.ttlSec, 20)
-        Assertions.assertEquals(redisJobLockPolicyConfig.waitTimeSec, 2)
+        Assertions.assertEquals(redisJobLockPolicyConfig.waitTimeMs, 2000)
     }
 }
