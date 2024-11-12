@@ -26,7 +26,7 @@ class SchedulerLockService(
             .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
             .tryLock(
                 redisJobLockPolicyConfig.waitTimeMs,
-                redisJobLockPolicyConfig.ttlSec,
+                redisJobLockPolicyConfig.ttlMs,
                 TimeUnit.MILLISECONDS
             )
             .filter { it == true } // only lock acquired
@@ -63,7 +63,7 @@ class SchedulerLockService(
             .flatMap {
                 semaphore.tryAcquire(
                     redisJobLockPolicyConfig.waitTimeMs,
-                    redisJobLockPolicyConfig.ttlSec,
+                    redisJobLockPolicyConfig.ttlMs,
                     TimeUnit.MILLISECONDS
                 )
             }
