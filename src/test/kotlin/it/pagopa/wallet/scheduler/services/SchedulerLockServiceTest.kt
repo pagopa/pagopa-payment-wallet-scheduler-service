@@ -38,7 +38,7 @@ class SchedulerLockServiceTest {
 
         // verifications
         verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
-        verify(rLockReactive, times(1)).tryLock(2, 20, TimeUnit.SECONDS)
+        verify(rLockReactive, times(1)).tryLock(2, 20, TimeUnit.MILLISECONDS)
     }
 
     @Test
@@ -72,7 +72,7 @@ class SchedulerLockServiceTest {
 
         // verifications
         verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
-        verify(rLockReactive, times(1)).tryLock(2, 20, TimeUnit.SECONDS)
+        verify(rLockReactive, times(1)).tryLock(2, 20, TimeUnit.MILLISECONDS)
     }
 
     @Test
@@ -117,7 +117,7 @@ class SchedulerLockServiceTest {
         // verifications
         verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
         verify(rPermitExpirableSemaphoreReactive, times(1)).trySetPermits(1)
-        verify(rPermitExpirableSemaphoreReactive, times(1)).tryAcquire(2, 20, TimeUnit.SECONDS)
+        verify(rPermitExpirableSemaphoreReactive, times(1)).tryAcquire(2, 20, TimeUnit.MILLISECONDS)
     }
 
     @Test
@@ -161,7 +161,7 @@ class SchedulerLockServiceTest {
         // verifications
         verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
         verify(rPermitExpirableSemaphoreReactive, times(1)).trySetPermits(1)
-        verify(rPermitExpirableSemaphoreReactive, times(1)).tryAcquire(2, 20, TimeUnit.SECONDS)
+        verify(rPermitExpirableSemaphoreReactive, times(1)).tryAcquire(2, 20, TimeUnit.MILLISECONDS)
     }
 
     @Test
