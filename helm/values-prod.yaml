@@ -42,7 +42,7 @@ microservice-chart:
     periodSeconds: 10
   deployment:
     create: true
-    replicas: 1
+    replicas: 3
   service:
     create: true
     type: ClusterIP
@@ -72,8 +72,8 @@ microservice-chart:
       cpu: "600m"
   autoscaling:
     enable: false
-    minReplica: 1
-    maxReplica: 1
+    minReplica: 3
+    maxReplica: 3
     pollingInterval: 10 # seconds
     cooldownPeriod: 50 # seconds
     triggers:
@@ -86,8 +86,8 @@ microservice-chart:
   strategy:
     type: "RollingUpdate"
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      maxSurge: "100%"
+      maxUnavailable: "100%"
   envConfig:
     OTEL_SERVICE_NAME: "pagopa-payment-wallet-scheduler-service"
     OTEL_SERVICE_ENVIRONMENT: "prod"
