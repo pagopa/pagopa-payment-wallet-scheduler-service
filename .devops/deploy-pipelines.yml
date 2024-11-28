@@ -364,7 +364,7 @@ stages:
               export PATH=$PATH:$PWD/kafka_2.13-2.8.0/bin
               # Verify Kafka installation
               kafka-topics.sh --version
-              sleep 4
+              sleep 15
               # Run the Kafka consumer command
               eventsFromKafka=$(kafka-console-consumer.sh \
                 --bootstrap-server pagopa-u-itn-observ-evh.servicebus.windows.net:9093 \
