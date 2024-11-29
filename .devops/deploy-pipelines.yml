@@ -193,6 +193,20 @@ stages:
                   displayName: "Checkout"
                 - task: KubectlInstaller@0
                 - task: Bash@3
+                  name: install_yq
+                  displayName: 'Install yq to update helm variables to allow tests on CDC'
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      sudo apt-get update
+                      sudo apt-get install -y software-properties-common
+                      sudo add-apt-repository -y ppa:rmescandon/yq
+                      sudo apt-get update
+                      sudo apt-get install -y yq
+                      yq e '.microservice-chart.envConfig.SCHEDULER_REDIS_RESUME_TTL_IN_MIN = "2"' -i helm/pay-wallet-values-uat.yaml
+                      yq e '.microservice-chart.envConfig.PAYMENT_WALLET_JOB_EXECUTION_START_DATE = "2000-01-01T00:00:00Z"' -i helm/pay-wallet-values-uat.yaml
+                      yq e '.microservice-chart.envConfig.PAYMENT_WALLET_JOB_EXECUTION_END_DATE = "2000-01-02T00:00:00Z"' -i helm/pay-wallet-values-uat.yaml
+                - task: Bash@3
                   name: update_chart_version
                   displayName: 'Setup helm microservice chart'
                   inputs:
