@@ -76,7 +76,7 @@ stages:
             displayName: 'Health check pagopa-payment-wallet-scheduler-service'
           - script: |
               # Give time to the scheduler to rest and reprocess old events
-              sleep 60 
+              sleep 200 
               
               # Get the first event from the queue
               eventFromQueue_1=$(az storage message get \
