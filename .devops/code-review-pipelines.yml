@@ -138,24 +138,6 @@ stages:
       - job: Integration_Test
         steps:
           - script: |
-              # Retrieve MongoDB password from Azure Key Vault
-              mongoPassword=$(MONGO_PASSWORD)
-              
-              # MongoDB connection details
-              mongoHost="pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com"
-              mongoUsername="pagopa-u-weu-ecommerce-cosmos-account"
-              mongoUri="mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@${mongoUsername}@"
-              
-              # Write documents to the payment-wallets DB in the payment-wallet collection
-              databaseName="payment-wallets"
-              collectionName="payment-wallet"
-              jsonFilePath="/automated-test/mongo-events.json"
-              
-              # Insert documents from the JSON file into the MongoDB collection
-              mongoimport --uri "$mongoUri" --db "$databaseName" --collection "$collectionName" --file "$jsonFilePath" --jsonArray
-
-            displayName: 'Insert documents into MongoDB'
-          - script: |
               sleep 15
               
               # Get the first event from the Azure Storage Queue
