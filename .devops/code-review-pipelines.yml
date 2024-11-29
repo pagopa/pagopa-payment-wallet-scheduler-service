@@ -139,7 +139,7 @@ stages:
         steps:
           - script: |
               # Retrieve MongoDB password from Azure Key Vault
-              mongoPassword=$(az keyvault secret show --name YOUR_SECRET_NAME --vault-name YOUR_KEYVAULT_NAME --query value -o tsv)
+              mongoPassword=$(MONGO_PASSWORD)
               
               # MongoDB connection details
               mongoHost="pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com"
