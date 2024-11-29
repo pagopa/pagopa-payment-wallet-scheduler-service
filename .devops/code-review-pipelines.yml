@@ -143,13 +143,13 @@ stages:
               
               # Get the first event from the Azure Storage Queue
               eventFromQueue_1=$(az storage message get \
-                --connection-string "$SCHEDULER_CDC_QUEUE_CONNECTION_STRING" \
+                --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
                 --queue-name pagopa-u-itn-pay-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
               # Get the second event from the Azure Storage Queue
               eventFromQueue_2=$(az storage message get \
-                --connection-string "$SCHEDULER_CDC_QUEUE_CONNECTION_STRING" \
+                --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
                 --queue-name pagopa-u-itn-pay-wallet-cdc-queue \
                 --output tsv --query '[0].content')
               
