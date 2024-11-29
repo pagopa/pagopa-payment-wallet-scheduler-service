@@ -1,18 +1,18 @@
 {
   "_class": "it.pagopa.wallet.audit.WalletOnboardCompletedEvent",
   "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
-  "timestamp": "2024-10-24T09:50:49.995798539Z",
+  "timestamp": "2000-01-01T09:50:49.995798539Z",
   "walletId": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
   "auditWallet": {
     "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
-    "creationDate": "2024-10-24T09:50:49.995798539Z",
-    "updateDate": "2024-10-24T09:51:22.226817657Z",
+    "creationDate": "2000-01-01T09:50:49.995798539Z",
+    "updateDate": "2000-01-01T09:51:22.226817657Z",
     "applications": [
       {
         "_id": "PAGOPA",
         "status": "ENABLED",
-        "creationDate": "2024-10-24T09:50:49.292579182Z",
-        "updateDate": "2024-10-24T09:50:49.292579682Z",
+        "creationDate": "2000-01-01T09:50:49.292579182Z",
+        "updateDate": "2000-01-01T09:50:49.292579682Z",
         "metadata": {}
       }
     ],
@@ -24,7 +24,7 @@
     "status": "VALIDATED",
     "validationOperationId": null,
     "validationOperationResult": "EXECUTED",
-    "validationOperationTimestamp": "2024-10-24T09:50:49.995798539Z",
+    "validationOperationTimestamp": "2000-01-01T09:50:49.995798539Z",
     "validationErrorCode": null
   }
 }
