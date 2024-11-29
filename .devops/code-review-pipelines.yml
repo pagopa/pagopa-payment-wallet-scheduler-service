@@ -106,8 +106,8 @@ stages:
                 exit 1
               fi
               
-              expectedDataEventCards=$(cat integration-tests/onboarding-wallet-card.json | jq -c .)
-              expectedDataEventPaypal=$(cat integration-tests/onboarding-wallet-paypal.json | jq -c .)
+              expectedDataEventCards=$(cat integration-test/onboarding-wallet-card.json | jq -c .)
+              expectedDataEventPaypal=$(cat integration-test/onboarding-wallet-paypal.json | jq -c .)
               
               echo "EventDataFromQueueCards: $eventDataFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
@@ -139,7 +139,8 @@ stages:
       - job: Integration_Test
         steps:
           - script: |
-              sleep 15
+              # Give time to the scheduler to rest and reprocess old events
+              sleep 200 
               
               # Get the first event from the Azure Storage Queue
               eventFromQueue_1=$(az storage message get \
