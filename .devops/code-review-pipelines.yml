@@ -75,8 +75,7 @@ stages:
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8400/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
             displayName: 'Health check pagopa-payment-wallet-scheduler-service'
           - script: |
-              # Give time to the scheduler to rest and reprocess old events
-              sleep 200 
+              sleep 15
               
               # Get the first event from the queue
               eventFromQueue_1=$(az storage message get \
