@@ -377,8 +377,8 @@ stages:
                 exit 1
               fi
               
-              expectedDataEventCards=$(cat automated-test/onboarding-wallet-card.json | jq -c .)
-              expectedDataEventPaypal=$(cat automated-test/onboarding-wallet-paypal.json | jq -c .)
+              expectedDataEventCards=$(cat automated-tests/onboarding-wallet-card.json | jq -c .)
+              expectedDataEventPaypal=$(cat automated-tests/onboarding-wallet-paypal.json | jq -c .)
               
               echo "EventDataFromQueueCards: $eventDataFromQueueCards"
               echo "ExpectedEventDataCards: $expectedDataEventCards"
