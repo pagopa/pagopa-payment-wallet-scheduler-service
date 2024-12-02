@@ -141,7 +141,8 @@ stages:
               # Clear all messages from the Azure Storage Queue
               az storage message clear \
                 --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
-                --queue-name pagopa-u-itn-pay-wallet-cdc-queue
+                --queue-name pagopa-u-itn-pay-wallet-cdc-queue \
+                --debug
             displayName: 'Clear Azure Storage Queue before testing'
           - script: |
               # Give time to the scheduler to rest and reprocess old events
