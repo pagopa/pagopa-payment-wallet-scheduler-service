@@ -134,9 +134,9 @@ stages:
   - stage: ValidateCDCFlow
     displayName: "Validate CDC flow"
     dependsOn: [ ]
+    pool:
+      name: pagopa-uat-linux
     jobs:
-        pool:
-          name: pagopa-uat-linux
       - job: TestContentOfCdcQueues
         steps:
           - script: |
