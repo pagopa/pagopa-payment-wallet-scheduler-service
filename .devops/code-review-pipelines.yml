@@ -130,4 +130,3 @@ stages:
                 exit 1
               fi
             displayName: 'Get event from Azurite queue and validate'
-
