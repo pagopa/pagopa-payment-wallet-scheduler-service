@@ -21,9 +21,12 @@ microservice-chart:
       envConfig:
         OTEL_SERVICE_NAME: "pagopa-payment-wallet-scheduler-service-blue"
         OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-payment-wallet-scheduler-service-blue,deployment.environment=uat"
+        SCHEDULER_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler-beta"
         SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "2"
         PAYMENT_WALLET_JOB_EXECUTION_START_DATE: "2000-01-01T00:00:00Z"
         PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2000-01-02T00:00:00Z"
+        SCHEDULER_CDC_QUEUE_NAME: pagopa-u-itn-pay-wallet-cdc-queue-b
+        SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks-beta"
       envSecret: { }
   image:
     repository: pagopauitncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
