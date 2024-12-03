@@ -91,7 +91,7 @@ resources:
     - repository: pagopaWalletTests
       type: github
       name: pagopa/pagopa-wallet-tests
-      ref: main
+      ref: CHK-3581-added-automated-tests-cdc-uat
       endpoint: 'io-azure-devops-github-ro'
 
 pool:
@@ -153,7 +153,7 @@ stages:
         succeeded(),
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
         or(
-        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+        eq(variables['Build.SourceBranch'], 'refs/heads/CHK-3581-added-automated-tests-cdc-uat'),
         startsWith(variables['Build.SourceBranch'], 'refs/tags')
         ))
     jobs:
@@ -249,7 +249,7 @@ stages:
                   gitEmail: $(GIT_EMAIL)
                   gitUsername: $(GIT_USERNAME)
                   gitHubConnection: $(GITHUB_CONNECTION)
-                  release_branch: main
+                  release_branch: CHK-3581-added-automated-tests-cdc-uat
                   semver_chart: '${{ parameters.RELEASE_CHART_SEMVER }}'
                   semver: '${{ parameters.RELEASE_SEMVER }}'
           - template: azure-templates/chart-current-version.yml
@@ -291,7 +291,7 @@ stages:
         in(dependencies.tag_docker_release.result, 'Succeeded', 'Skipped'),
         in(dependencies.Release.result, 'Succeeded', 'Skipped'),
         or(
-          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          eq(variables['Build.SourceBranch'], 'refs/heads/CHK-3581-added-automated-tests-cdc-uat'),
           startsWith(variables['Build.SourceBranch'], 'refs/tags')
         )
       )
