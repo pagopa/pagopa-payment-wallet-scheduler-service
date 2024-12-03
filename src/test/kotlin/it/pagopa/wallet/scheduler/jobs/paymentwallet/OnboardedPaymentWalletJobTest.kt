@@ -251,4 +251,30 @@ class OnboardedPaymentWalletJobTest {
             .getResumeTimestamp(eq(onboardedPaymentWalletJob.id()))
         verify(walletService, times(1)).getWalletsForCdcIngestion(eq(checkpoint), eq(endDate))
     }
+
+    @Test
+    fun `should perform checkpoint using last element based on timestamp`() {
+        // pre-requisites
+        val startDate = Instant.now()
+        val endDate = startDate + Duration.ofSeconds(10)
+        val jobConf =
+            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
+        val wallet2 = WalletTestUtils.cardWalletDocument("VALIDATED").copy(creationDate = endDate)
+        val foundWallets = listOf(wallet2, wallet)
+        given(walletService.getWalletsForCdcIngestion(any(), any()))
+            .willReturn(Flux.fromIterable(foundWallets))
+        given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
+            mono { it.arguments[0] }
+        }
+        doNothing()
+            .`when`(redisResumePolicyService)
+            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
+        // Test
+        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
+            .expectNext(wallet2.creationDate.toString())
+            .verifyComplete()
+        verify(redisResumePolicyService, times(1))
+            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet2.creationDate))
+    }
 }

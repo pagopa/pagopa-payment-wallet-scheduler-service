@@ -3,10 +3,7 @@ package it.pagopa.wallet.scheduler.jobs.paymentwallet
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.documents.wallets.details.CardDetails
 import it.pagopa.wallet.documents.wallets.details.PayPalDetails
-import it.pagopa.wallet.scheduler.common.cdc.AuditWallet
-import it.pagopa.wallet.scheduler.common.cdc.AuditWalletApplication
-import it.pagopa.wallet.scheduler.common.cdc.AuditWalletDetails
-import it.pagopa.wallet.scheduler.common.cdc.WalletOnboardCompletedEvent
+import it.pagopa.wallet.scheduler.common.cdc.*
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.jobs.ScheduledJob
 import it.pagopa.wallet.scheduler.jobs.config.OnboardedPaymentWalletJobConfiguration
@@ -14,6 +11,7 @@ import it.pagopa.wallet.scheduler.services.CdcEventDispatcherService
 import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.WalletService
 import java.time.Instant
+import java.time.OffsetDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -52,7 +50,7 @@ class OnboardedPaymentWalletJob(
             )
             .map { getWalletOnboardCompletedEvent(it) }
             .flatMap { cdcEventDispatcherService.dispatchEvent(it) }
-            .collectList()
+            .collectSortedList(compareBy<LoggingEvent> { OffsetDateTime.parse(it.timestamp) })
             .flatMap {
                 Mono.fromCallable {
                         redisResumePolicyService.saveResumeTimestamp(
