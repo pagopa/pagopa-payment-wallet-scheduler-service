@@ -131,7 +131,7 @@ microservice-chart:
     REDIS_SSL_ENABLED: "true"
     PAYMENT_WALLET_JOB_EXECUTION_CRON: "*/10 * * * * *"
     PAYMENT_WALLET_JOB_EXECUTION_START_DATE: "1970-01-01T00:00:00Z"
-    PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2009-01-01T00:00:00Z" #TODO to be set with the CDC activation date
+    PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "1970-01-01T00:00:00Z"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     MONGO_PASSWORD: mongo-wallet-password
