@@ -1,36 +1,29 @@
-# Deploy to Azure Kubernetes Service:
-# - DEV
-# - UAT -> PROD
-# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
+---
 parameters:
-  - name: 'DEV_DEPLOY'
-    displayName: 'DEV deployment without release'
+  - name: DEV_DEPLOY
+    displayName: DEV deployment without release
     type: boolean
-    default: True
+    default: true
     values:
-      - False
-      - True
-
-  - name: 'UAT_PROD_DEPLOY'
-    displayName: 'Deploy on UAT environment with PROD promotion'
+      - false
+      - true
+  - name: UAT_PROD_DEPLOY
+    displayName: Deploy on UAT environment with PROD promotion
     type: boolean
-    default: False
+    default: false
     values:
-      - False
-      - True
-
-  - name: 'SKIP_BUILD'
-    displayName: 'Check this flag to skip build and proceed to deploy a docker image previously built'
+      - false
+      - true
+  - name: SKIP_BUILD
+    displayName: Check this flag to skip build and proceed to deploy a docker image
+      previously built
     type: boolean
-    default: False
+    default: false
     values:
-      - False
-      - True
-
-  - name: 'RELEASE_CHART_SEMVER'
-    displayName: 'When upgrading helm chart, define the version bump to apply'
+      - false
+      - true
+  - name: RELEASE_CHART_SEMVER
+    displayName: When upgrading helm chart, define the version bump to apply
     type: string
     values:
       - major
@@ -38,9 +31,9 @@ parameters:
       - patch
       - none
     default: none
-
-  - name: 'RELEASE_SEMVER'
-    displayName: 'When packing a release, define the version bump to apply (release is done automatically when deploying on UAT and skipped on DEV) '
+  - name: RELEASE_SEMVER
+    displayName: "When packing a release, define the version bump to apply (release
+      is done automatically when deploying on UAT and skipped on DEV) "
     type: string
     values:
       - major
@@ -48,58 +41,55 @@ parameters:
       - patch
       - none
     default: patch
-
-  - name: "FORCE_REPLACE_DOCKER_IMAGE"
-    displayName: "Force the existing docker image to be replaced (latest tag)"
+  - name: FORCE_REPLACE_DOCKER_IMAGE
+    displayName: Force the existing docker image to be replaced (latest tag)
     type: boolean
-    default: False
+    default: false
     values:
-      - False
-      - True
-
-  - name: "SKIP_RELEASE"
-    displayName: "Skip release"
+      - false
+      - true
+  - name: SKIP_RELEASE
+    displayName: Skip release
     type: boolean
-    default: False
+    default: false
     values:
-      - False
-      - True
-
-  - name: "UAT_SKIP_BLUE_DEPLOYMENT"
-    displayName: "Skip blue/green UAT deployment strategy: activating this parameter no blue version will be created and the pipeline proceed building and deploy artifact green version"
+      - false
+      - true
+  - name: UAT_SKIP_BLUE_DEPLOYMENT
+    displayName: "Skip blue/green UAT deployment strategy: activating this parameter
+      no blue version will be created and the pipeline proceed building and
+      deploy artifact green version"
     type: boolean
-    default: True
+    default: true
     values:
-      - False
-      - True
-  - name: "PROD_SKIP_BLUE_DEPLOYMENT"
-    displayName: "Skip blue/green PROD deployment strategy: activating this parameter no blue version will be created and the pipeline proceed building and deploy artifact green version"
+      - false
+      - true
+  - name: PROD_SKIP_BLUE_DEPLOYMENT
+    displayName: "Skip blue/green PROD deployment strategy: activating this
+      parameter no blue version will be created and the pipeline proceed
+      building and deploy artifact green version"
     type: boolean
-    default: True
+    default: true
     values:
-      - False
-      - True
-
-
+      - false
+      - true
 resources:
   repositories:
     - repository: pagopaCommons
       type: github
       name: pagopa/azure-pipeline-templates
       ref: refs/tags/v2.10.1
-      endpoint: 'io-azure-devops-github-ro'
+      endpoint: io-azure-devops-github-ro
     - repository: pagopaWalletTests
       type: github
       name: pagopa/pagopa-wallet-tests
       ref: main
-      endpoint: 'io-azure-devops-github-ro'
-
+      endpoint: io-azure-devops-github-ro
 pool:
   vmImage: ubuntu-latest
-
 stages:
-  - stage: 'Build_for_DEV'
-    displayName: 'Build for DEV deployment'
+  - stage: Build_for_DEV
+    displayName: Build for DEV deployment
     condition: and(succeeded(), eq(${{parameters.DEV_DEPLOY}}, true))
     jobs:
       - job: Build_docker
@@ -112,53 +102,47 @@ stages:
               DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
               DOCKER_IMAGE_TAG: $(Build.SourceVersion)
               FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
-  - stage: 'Deploy_for_DEV'
-    displayName: 'Deploy DEV'
+  - stage: Deploy_for_DEV
+    displayName: Deploy DEV
     dependsOn: Build_for_DEV
     condition: and(succeeded(), eq(${{parameters.DEV_DEPLOY}}, true) )
     jobs:
-      - deployment: "deploy"
-        environment: 'DEV'
+      - deployment: deploy
+        environment: DEV
         strategy:
           runOnce:
             deploy:
               steps:
                 - checkout: self
-                  displayName: "Checkout"
+                  displayName: Checkout
                 - task: Bash@3
                   name: update_chart_version
-                  displayName: 'Setup helm microservice chart'
+                  displayName: Setup helm microservice chart
                   inputs:
-                    targetType: "inline"
-                    script: |
-                      helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
+                    targetType: inline
+                    script: >
+                      helm repo add microservice-chart
+                      https://pagopa.github.io/aks-microservice-chart-blueprint
+
                       helm dep build helm
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
-                    ENV: 'DEV'
+                    ENV: DEV
                     KUBERNETES_SERVICE_CONN: $(DEV_KUBERNETES_SERVICE_CONN)
-                    NAMESPACE: "pay-wallet"
+                    NAMESPACE: pay-wallet
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-                    VALUE_FILE: "helm/pay-wallet-values-dev.yaml"
+                    VALUE_FILE: helm/pay-wallet-values-dev.yaml
                     GREEN_VERSION: $(Build.SourceVersion)
-  # --- END Deploy DEV --- #
-
-  # --- START Deploy UAT --- #
-  - stage: "Build_release_candidate"
-    displayName: 'Build release candidate'
-    dependsOn: [ ]
-    condition:
-        and(
-        succeeded(),
-        eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-        or(
-        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-        startsWith(variables['Build.SourceBranch'], 'refs/tags')
-        ))
+  - stage: Build_release_candidate
+    displayName: Build release candidate
+    dependsOn: []
+    condition: and( succeeded(), eq(${{parameters.UAT_PROD_DEPLOY}}, true), or(
+      eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+      startsWith(variables['Build.SourceBranch'], 'refs/tags') ))
     jobs:
-      - job: "build"
-        displayName: 'Build release candidate docker image'
+      - job: build
+        displayName: Build release candidate docker image
         steps:
           - template: templates/docker-release/template.yaml@pagopaCommons
             parameters:
@@ -168,51 +152,52 @@ stages:
               DOCKER_IMAGE_TAG: $(Build.SourceVersion)
               FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
           - template: azure-templates/chart-current-version.yml
-
-  - stage: "Deploy_UAT_Blue"
-    displayName: 'UAT blue deployment'
+  - stage: Deploy_UAT_Blue
+    displayName: UAT blue deployment
     dependsOn: Build_release_candidate
     condition: succeeded()
     variables:
-      green_app_version: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.appVersion'] ]
+      green_app_version: $[
+        stageDependencies.Build_release_candidate.build.outputs['chart_current_version.appVersion']
+        ]
     jobs:
-      - deployment: "Blue_deployment"
-        displayName: "Blue deployment"
+      - deployment: Blue_deployment
+        displayName: Blue deployment
         pool:
           name: pagopa-uat-linux
-        environment: 'UAT'
+        environment: UAT
         strategy:
           runOnce:
             deploy:
               steps:
                 - checkout: self
-                  displayName: "Checkout"
+                  displayName: Checkout
                 - task: KubectlInstaller@0
                 - task: Bash@3
                   name: update_chart_version
-                  displayName: 'Setup helm microservice chart'
+                  displayName: Setup helm microservice chart
                   inputs:
-                    targetType: "inline"
-                    script: |
-                      helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
+                    targetType: inline
+                    script: >
+                      helm repo add microservice-chart
+                      https://pagopa.github.io/aks-microservice-chart-blueprint
+
                       helm dep build helm
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
                     DO_BLUE_GREEN_DEPLOY: true
-                    ENV: 'UAT'
+                    ENV: UAT
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
-                    NAMESPACE: "pay-wallet"
+                    NAMESPACE: pay-wallet
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-                    VALUE_FILE: "helm/pay-wallet-values-uat.yaml"
+                    VALUE_FILE: helm/pay-wallet-values-uat.yaml
                     GREEN_VERSION: $(green_app_version)
                     BLUE_VERSION: $(Build.SourceVersion)
-
-
-  # --- START validation of CDC UAT --- #
   - stage: ValidateCDCFlow
-    displayName: "Validate CDC flow"
-    dependsOn: [Deploy_UAT_Blue]
+    displayName: Validate CDC flow
+    dependsOn:
+      - Deploy_UAT_Blue
     pool:
       name: pagopa-uat-linux
     jobs:
@@ -223,28 +208,36 @@ stages:
               az storage message clear \
                 --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
                 --queue-name pagopa-u-itn-pay-wallet-cdc-queue-b
-            displayName: 'Clear Azure Storage Queue before testing'
-          - script: |
+            displayName: Clear Azure Storage Queue before testing
+          - script: >
               # Give time to the scheduler to rest and reprocess old events
+
               sleep 200 
-              
+
+
               # Get the first event from the Azure Storage Queue
+
               eventFromQueue_1=$(az storage message get \
                 --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
                 --queue-name pagopa-u-itn-pay-wallet-cdc-queue-b \
                 --output tsv --query '[0].content')
-              
+
               # Get the second event from the Azure Storage Queue
+
               eventFromQueue_2=$(az storage message get \
                 --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
                 --queue-name pagopa-u-itn-pay-wallet-cdc-queue-b \
                 --output tsv --query '[0].content')
-              
+
               # Extract data from both events
+
               eventDataFromQueue_1=$(echo "$eventFromQueue_1" | jq -c '.data')
+
               eventDataFromQueue_2=$(echo "$eventFromQueue_2" | jq -c '.data')
-              
+
+
               # Use IDs to determine which event is which
+
               if [[ "$eventFromQueue_1" == *"00a06383-1495-4b90-88f6-80c5fecf554a"* ]]; then
                 eventDataFromQueueCards="$eventDataFromQueue_1"
                 eventDataFromQueuePaypal="$eventDataFromQueue_2"
@@ -255,42 +248,50 @@ stages:
                 echo "Unexpected event ID in eventFromQueue_1"
                 exit 1
               fi
-              
+
+
               expectedDataEventCards=$(cat automated-tests/onboarding-wallet-card.json | jq -c .)
+
               expectedDataEventPaypal=$(cat automated-tests/onboarding-wallet-paypal.json | jq -c .)
-              
+
+
               echo "EventDataFromQueueCards: $eventDataFromQueueCards"
+
               echo "ExpectedEventDataCards: $expectedDataEventCards"
-              
+
+
               echo "EventDataFromQueuePaypal: $eventDataFromQueuePaypal"
+
               echo "ExpectedEventDataPaypal: $expectedDataEventPaypal"
-              
+
+
               # Compare the events Cards
+
               if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
                 echo "CARDS: test passed successfully"
               else
                 echo "CARDS: fail! unexpected event"
                 exit 1
               fi
-              
+
+
               # Compare the events Paypal
+
               if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
                 echo "PAYPAL: test passed successfully"
               else
                 echo "PAYPAL: fail! unexpected event"
                 exit 1
               fi
-            displayName: 'Get event from Azure Storage Queue and validate'
-  # --- END validation of CDC UAT --- #
-
+            displayName: Get event from Azure Storage Queue and validate
   - stage: Release
-      dependsOn: Build_release_candidate
-      condition: succeeded()
+    dependsOn: Build_release_candidate
+    condition: succeeded()
     jobs:
       - job: make_release
         displayName: Make github release
         steps:
-          - ${{ if eq(parameters['SKIP_RELEASE'], False) }}:
+          - "${{ if eq(parameters['SKIP_RELEASE'], False) }}":
               - template: templates/node-job-setup/template.yaml@pagopaCommons
                 parameters:
                   persistCredentials: true
@@ -300,42 +301,43 @@ stages:
                   gitUsername: $(GIT_USERNAME)
                   gitHubConnection: $(GITHUB_CONNECTION)
                   release_branch: main
-                  semver_chart: '${{ parameters.RELEASE_CHART_SEMVER }}'
-                  semver: '${{ parameters.RELEASE_SEMVER }}'
+                  semver_chart: ${{ parameters.RELEASE_CHART_SEMVER }}
+                  semver: ${{ parameters.RELEASE_SEMVER }}
           - template: azure-templates/chart-current-version.yml
-
-  - stage: "tag_docker_release"
-    displayName: 'Tag Docker image to be release'
+  - stage: tag_docker_release
+    displayName: Tag Docker image to be release
     dependsOn: Release
-    condition:
-      and(
-      succeeded(),
-      ne('${{parameters.RELEASE_SEMVER}}', 'none')
-      )
+    condition: and( succeeded(), ne('${{parameters.RELEASE_SEMVER}}', 'none') )
     variables:
-      app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
+      app_version: $[
+        stageDependencies.Release.make_release.outputs['chart_current_version.appVersion']
+        ]
     jobs:
-      - job: "build"
-        displayName: 'Build UAT service beta'
+      - job: build
+        displayName: Build UAT service beta
         steps:
           - task: Docker@2
-            displayName: "docker login"
+            displayName: docker login
             inputs:
               containerRegistry: $(UAT_CONTAINER_REGISTRY_SERVICE_CONN)
-              command: "login"
+              command: login
           - task: Bash@3
-            displayName: "docker tag new version"
+            displayName: docker tag new version
             inputs:
-              targetType: "inline"
-              script: |
-                docker pull $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion)
-                docker tag $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion) $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
-                docker push $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
+              targetType: inline
+              script: >
+                docker pull
+                $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion)
 
-  - stage: "GreenDeployment_WaitForApproval"
-    displayName: 'UAT green approval deployment'
-    dependsOn: [ValidateCDCFlow,tag_docker_release]
-    condition: |
+                docker tag $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion) $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
+
+                docker push $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
+  - stage: GreenDeployment_WaitForApproval
+    displayName: UAT green approval deployment
+    dependsOn:
+      - ValidateCDCFlow
+      - tag_docker_release
+    condition: >
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
         in(dependencies.ValidateCDCFlow.result, 'Succeeded', 'Skipped','Failed'),
@@ -346,57 +348,61 @@ stages:
         )
       )
     variables:
-      commitUrl: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.commitUrl'] ]
+      commitUrl: $[
+        stageDependencies.Build_release_candidate.build.outputs['chart_current_version.commitUrl']
+        ]
     jobs:
       - job: GreenDeployment_WaitForApproval
         displayName: Manual blue deploy approval
         pool: server
-        timeoutInMinutes: 4320 # 3 days
+        timeoutInMinutes: 4320
         steps:
           - task: ManualValidation@0
-            timeoutInMinutes: 4320 # 3 days
+            timeoutInMinutes: 4320
             inputs:
               notifyUsers: $(APPROVE_TOUCHPOINT_MAIL)
-              instructions: "Please approve or reject UAT blue green promotions for $(commitUrl)"
-              onTimeout: 'reject'
-
-
-  - stage: "Deploy_UAT_Green"
-    displayName: 'UAT green deployment'
-    dependsOn: [GreenDeployment_WaitForApproval]
+              instructions: Please approve or reject UAT blue green promotions for
+                $(commitUrl)
+              onTimeout: reject
+  - stage: Deploy_UAT_Green
+    displayName: UAT green deployment
+    dependsOn:
+      - GreenDeployment_WaitForApproval
     condition: in(dependencies.GreenDeployment_WaitForApproval.result, 'Succeeded')
     variables:
-      app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
+      app_version: $[
+        stageDependencies.Release.make_release.outputs['chart_current_version.appVersion']
+        ]
     jobs:
-      - deployment: "Green_deployment"
-        displayName: "Green deployment"
+      - deployment: Green_deployment
+        displayName: Green deployment
         pool:
           name: pagopa-uat-linux
-        environment: 'UAT'
+        environment: UAT
         strategy:
           runOnce:
             deploy:
               steps:
                 - checkout: self
-                  displayName: "Checkout"
+                  displayName: Checkout
                 - task: KubectlInstaller@0
                 - task: Bash@3
                   name: update_chart_version
-                  displayName: 'Setup helm microservice chart'
+                  displayName: Setup helm microservice chart
                   inputs:
-                    targetType: "inline"
-                    script: |
-                      helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
+                    targetType: inline
+                    script: >
+                      helm repo add microservice-chart
+                      https://pagopa.github.io/aks-microservice-chart-blueprint
+
                       helm dep build helm
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
                     DO_BLUE_GREEN_DEPLOY: false
-                    ENV: 'UAT'
+                    ENV: UAT
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
-                    NAMESPACE: "pay-wallet"
+                    NAMESPACE: pay-wallet
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-                    VALUE_FILE: "helm/pay-wallet-values-uat.yaml"
+                    VALUE_FILE: helm/pay-wallet-values-uat.yaml
                     GREEN_VERSION: $(app_version)
-  # --- END Deploy UAT --- #
-
