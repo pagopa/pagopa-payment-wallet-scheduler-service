@@ -334,7 +334,17 @@ stages:
 
   - stage: "GreenDeployment_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: [Deploy_UAT_Blue,tag_docker_release]
+    dependsOn: [ValidateCDCFlow,tag_docker_release]
+    condition: |
+      and(
+        eq(${{parameters.UAT_PROD_DEPLOY}}, true),
+        in(dependencies.ValidateCDCFlow.result, 'Succeeded', 'Skipped','Failed'),
+        in(dependencies.tag_docker_release.result, 'Succeeded'),
+        or(
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          startsWith(variables['Build.SourceBranch'], 'refs/tags')
+        )
+      )
     variables:
       commitUrl: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.commitUrl'] ]
     jobs:
@@ -353,17 +363,8 @@ stages:
 
   - stage: "Deploy_UAT_Green"
     displayName: 'UAT green deployment'
-    dependsOn: [GreenDeployment_WaitForApproval,ValidateCDCFlow ]
-    condition: |
-      and(
-        eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-        in(dependencies.ValidateCDCFlow.result, 'Succeeded', 'Skipped','Failed'),
-        in(dependencies.GreenDeployment_WaitForApproval.result, 'Succeeded'),
-        or(
-          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-          startsWith(variables['Build.SourceBranch'], 'refs/tags')
-        )
-      )
+    dependsOn: [GreenDeployment_WaitForApproval]
+    condition: in(dependencies.GreenDeployment_WaitForApproval.result, 'Succeeded')
     variables:
       app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
