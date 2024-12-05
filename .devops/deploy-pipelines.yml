@@ -284,8 +284,8 @@ stages:
   # --- END validation of CDC UAT --- #
 
   - stage: Release
-      dependsOn: Build_release_candidate
-      condition: succeeded()
+    dependsOn: Build_release_candidate
+    condition: succeeded()
     jobs:
       - job: make_release
         displayName: Make github release
