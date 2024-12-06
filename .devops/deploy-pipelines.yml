@@ -202,7 +202,7 @@ stages:
                   inputs:
                     kubernetesServiceEndpoint: $(UAT_KUBERNETES_SERVICE_CONN)
                     kubernetesCluster: $(kubernetesCluster)
-                    namespace: ecommerce
+                    namespace: pay-wallet
                     command: delete
                     arguments: deployment beta-pagopa-pay-wallet-scheduler-service
                 - template: azure-templates/helm-microservice-chart-deploy.yml
