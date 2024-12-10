@@ -343,7 +343,7 @@ stages:
 
   - stage: "GreenDeployment_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: [ValidateCDCFlow,tag_docker_release]
+    dependsOn: [ValidateCDCFlow,tag_docker_release,Release]
     condition: |
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
@@ -355,7 +355,7 @@ stages:
         )
       )
     variables:
-      commitUrl: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.commitUrl'] ]
+      commitUrl: $[ stageDependencies.Release.build.outputs['chart_current_version.commitUrl'] ]
     jobs:
       - job: GreenDeployment_WaitForApproval
         displayName: Manual blue deploy approval
@@ -372,7 +372,7 @@ stages:
 
   - stage: "Deploy_UAT_Green"
     displayName: 'UAT green deployment'
-    dependsOn: [GreenDeployment_WaitForApproval]
+    dependsOn: [GreenDeployment_WaitForApproval, Release]
     condition: in(dependencies.GreenDeployment_WaitForApproval.result, 'Succeeded')
     variables:
       app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
@@ -412,7 +412,7 @@ stages:
   # --- START Deploy PROD --- #
   - stage: "Prod_WaitForApproval"
     displayName: 'PROD approval deployment'
-    dependsOn: [ Deploy_UAT_Green,Release ]
+    dependsOn: [ Deploy_UAT_Green, Release ]
     condition: |
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
@@ -520,14 +520,14 @@ stages:
   - stage: "PROD_Green_WaitForApproval"
     displayName: 'PROD green approval deployment'
     ${{ if eq(parameters['PROD_SKIP_BLUE_DEPLOYMENT'], True) }}:
-      dependsOn: Prod_WaitForApproval
+      dependsOn: [Prod_WaitForApproval, Release]
       condition: |
         and(
           eq(${{parameters.UAT_PROD_DEPLOY}}, true),
           in(dependencies.Prod_WaitForApproval.result, 'Succeeded')
         )
     ${{ if eq(parameters['PROD_SKIP_BLUE_DEPLOYMENT'], False) }}:
-      dependsOn: Deploy_PROD_Blue
+      dependsOn: [Deploy_PROD_Blue, Release]
     variables:
       release_url: $[ stageDependencies.Release.make_release.outputs['chart_current_version.releaseUrl'] ]
     jobs:
@@ -545,7 +545,7 @@ stages:
 
   - stage: "Build_PROD_Green"
     displayName: 'PROD green Build'
-    dependsOn: [ PROD_Green_WaitForApproval,Release ]
+    dependsOn: [ PROD_Green_WaitForApproval, Release ]
     variables:
       prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     condition: |
