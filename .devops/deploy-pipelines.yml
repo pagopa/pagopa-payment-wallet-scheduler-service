@@ -172,11 +172,7 @@ stages:
   - stage: "Deploy_UAT_Blue"
     displayName: 'UAT blue deployment'
     dependsOn: Build_release_candidate
-    condition:
-      and(
-      succeeded(),
-      eq(${{parameters.UAT_SKIP_BLUE_DEPLOYMENT}}, False)
-      )
+    condition: succeeded()
     variables:
       green_app_version: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.appVersion'] ]
     jobs:
@@ -200,6 +196,15 @@ stages:
                     script: |
                       helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
                       helm dep build helm
+                - task: Kubernetes@1
+                  displayName: (workaround) Delete old beta deployment
+                  continueOnError: true
+                  inputs:
+                    kubernetesServiceEndpoint: $(UAT_KUBERNETES_SERVICE_CONN)
+                    kubernetesCluster: $(kubernetesCluster)
+                    namespace: pay-wallet
+                    command: delete
+                    arguments: deployment beta-pagopa-pay-wallet-scheduler-service
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
@@ -212,30 +217,84 @@ stages:
                     GREEN_VERSION: $(green_app_version)
                     BLUE_VERSION: $(Build.SourceVersion)
 
-  - stage: "Bluegreen_WaitForApproval"
-    displayName: 'UAT green approval deployment'
-    dependsOn: Deploy_UAT_Blue
-    variables:
-      commitUrl: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.commitUrl'] ]
+
+  # --- START validation of CDC UAT --- #
+  - stage: ValidateCDCFlow
+    displayName: "Validate CDC flow"
+    dependsOn: [Deploy_UAT_Blue]
+    pool:
+      name: pagopa-uat-linux
     jobs:
-      - job: Bluegreen_WaitForApproval
-        displayName: Manual blue deploy approval
-        pool: server
-        timeoutInMinutes: 4320 # 3 days
+      - job: TestContentOfCdcQueues
         steps:
-          - task: ManualValidation@0
-            timeoutInMinutes: 4320 # 3 days
-            inputs:
-              notifyUsers: $(APPROVE_TOUCHPOINT_MAIL)
-              instructions: "Please approve or reject UAT blue green promotions for $(commitUrl)"
-              onTimeout: 'reject'
+          - script: |
+              # Clear all messages from the Azure Storage Queue
+              az storage message clear \
+                --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
+                --queue-name pagopa-u-itn-pay-wallet-cdc-queue-b
+            displayName: 'Clear Azure Storage Queue before testing'
+          - script: |
+              # Give time to the scheduler to rest and reprocess old events
+              sleep 200 
+              
+              # Get the first event from the Azure Storage Queue
+              eventFromQueue_1=$(az storage message get \
+                --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
+                --queue-name pagopa-u-itn-pay-wallet-cdc-queue-b \
+                --output tsv --query '[0].content')
+              
+              # Get the second event from the Azure Storage Queue
+              eventFromQueue_2=$(az storage message get \
+                --connection-string "$(SCHEDULER_CDC_QUEUE_CONNECTION_STRING)" \
+                --queue-name pagopa-u-itn-pay-wallet-cdc-queue-b \
+                --output tsv --query '[0].content')
+              
+              # Extract data from both events
+              eventDataFromQueue_1=$(echo "$eventFromQueue_1" | jq -c '.data')
+              eventDataFromQueue_2=$(echo "$eventFromQueue_2" | jq -c '.data')
+              
+              # Use IDs to determine which event is which
+              if [[ "$eventFromQueue_1" == *"00a06383-1495-4b90-88f6-80c5fecf554a"* ]]; then
+                eventDataFromQueueCards="$eventDataFromQueue_1"
+                eventDataFromQueuePaypal="$eventDataFromQueue_2"
+              elif [[ "$eventFromQueue_1" == *"a0a27446-e6d8-47d2-8786-ca393f19c30b"* ]]; then
+                eventDataFromQueuePaypal="$eventDataFromQueue_1"
+                eventDataFromQueueCards="$eventDataFromQueue_2"
+              else
+                echo "Unexpected event ID in eventFromQueue_1"
+                exit 1
+              fi
+              
+              expectedDataEventCards=$(cat automated-tests/onboarding-wallet-card.json | jq -c .)
+              expectedDataEventPaypal=$(cat automated-tests/onboarding-wallet-paypal.json | jq -c .)
+              
+              echo "EventDataFromQueueCards: $eventDataFromQueueCards"
+              echo "ExpectedEventDataCards: $expectedDataEventCards"
+              
+              echo "EventDataFromQueuePaypal: $eventDataFromQueuePaypal"
+              echo "ExpectedEventDataPaypal: $expectedDataEventPaypal"
+              
+              # Compare the events Cards
+              if [ "$eventDataFromQueueCards" == "$expectedDataEventCards" ]; then
+                echo "CARDS: test passed successfully"
+              else
+                echo "CARDS: fail! unexpected event"
+                exit 1
+              fi
+              
+              # Compare the events Paypal
+              if [ "$eventDataFromQueuePaypal" == "$expectedDataEventPaypal" ]; then
+                echo "PAYPAL: test passed successfully"
+              else
+                echo "PAYPAL: fail! unexpected event"
+                exit 1
+              fi
+            displayName: 'Get event from Azure Storage Queue and validate'
+  # --- END validation of CDC UAT --- #
 
   - stage: Release
-    ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], True) }}:
-      dependsOn: Build_release_candidate
-    ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], False) }}:
-      dependsOn: Bluegreen_WaitForApproval
-      condition: succeeded()
+    dependsOn: Build_release_candidate
+    condition: succeeded()
     jobs:
       - job: make_release
         displayName: Make github release
@@ -282,19 +341,39 @@ stages:
                 docker tag $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion) $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
                 docker push $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
 
-  - stage: "Deploy_UAT_Green"
-    displayName: 'UAT green deployment'
-    dependsOn: [ tag_docker_release,Release ]
+  - stage: "GreenDeployment_WaitForApproval"
+    displayName: 'UAT green approval deployment'
+    dependsOn: [ValidateCDCFlow,tag_docker_release]
     condition: |
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-        in(dependencies.tag_docker_release.result, 'Succeeded', 'Skipped'),
-        in(dependencies.Release.result, 'Succeeded', 'Skipped'),
+        in(dependencies.ValidateCDCFlow.result, 'Succeeded', 'Skipped','Failed'),
+        in(dependencies.tag_docker_release.result, 'Succeeded'),
         or(
           eq(variables['Build.SourceBranch'], 'refs/heads/main'),
           startsWith(variables['Build.SourceBranch'], 'refs/tags')
         )
       )
+    variables:
+      commitUrl: $[ stageDependencies.Build_release_candidate.build.outputs['chart_current_version.commitUrl'] ]
+    jobs:
+      - job: GreenDeployment_WaitForApproval
+        displayName: Manual blue deploy approval
+        pool: server
+        timeoutInMinutes: 4320 # 3 days
+        steps:
+          - task: ManualValidation@0
+            timeoutInMinutes: 4320 # 3 days
+            inputs:
+              notifyUsers: $(APPROVE_TOUCHPOINT_MAIL)
+              instructions: "Please approve or reject UAT blue green promotions for $(commitUrl)"
+              onTimeout: 'reject'
+
+
+  - stage: "Deploy_UAT_Green"
+    displayName: 'UAT green deployment'
+    dependsOn: [GreenDeployment_WaitForApproval]
+    condition: in(dependencies.GreenDeployment_WaitForApproval.result, 'Succeeded')
     variables:
       app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
