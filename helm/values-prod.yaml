@@ -42,7 +42,7 @@ microservice-chart:
     periodSeconds: 10
   deployment:
     create: true
-    replicas: 3
+    replicas: 1
   service:
     create: true
     type: ClusterIP
@@ -72,8 +72,8 @@ microservice-chart:
       cpu: "600m"
   autoscaling:
     enable: false
-    minReplica: 3
-    maxReplica: 3
+    minReplica: 1
+    maxReplica: 1
     pollingInterval: 10 # seconds
     cooldownPeriod: 50 # seconds
     triggers:
@@ -118,7 +118,7 @@ microservice-chart:
     SCHEDULER_CDC_SEND_RETRY_MAX_ATTEMPTS: "3"
     SCHEDULER_CDC_SEND_RETRY_INTERVAL_IN_MS: "1000"
     WALLET_SEARCH_STATUS: "VALIDATED"
-    WALLET_SEARCH_LIMIT: "3000"
+    WALLET_SEARCH_LIMIT: "1"
     SCHEDULER_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler"
     SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "2880" #2 days
     SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks"
@@ -127,9 +127,9 @@ microservice-chart:
     REDIS_HOST: pagopa-p-itn-pay-wallet-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
-    PAYMENT_WALLET_JOB_EXECUTION_CRON: "*/10 * * * * *"
-    PAYMENT_WALLET_JOB_EXECUTION_START_DATE: "2024-01-01T00:00:00Z"
-    PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2024-12-16T08:26:50:15Z"
+    PAYMENT_WALLET_JOB_EXECUTION_CRON: "-"
+    PAYMENT_WALLET_JOB_EXECUTION_START_DATE: "2000-01-01T00:00:00Z"
+    PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2000-01-01T00:00:00Z"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     MONGO_PASSWORD: mongo-wallet-password
