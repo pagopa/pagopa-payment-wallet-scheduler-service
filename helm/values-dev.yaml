@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: "pagopa-pay-wallet-scheduler-service"
   image:
     repository: pagopaditncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
-    tag: "0.5.4"
+    tag: "0.5.5"
     pullPolicy: Always
   livenessProbe:
     httpGet:
