@@ -172,7 +172,7 @@ stages:
             displayName: 'Clear Azure Storage Queue before testing'
           - script: |
               # Give time to the scheduler to rest and reprocess old events
-              sleep 200 
+              sleep 10 
               
               # Get the first event from the Azure Storage Queue
               eventFromQueue_1=$(az storage message get \
