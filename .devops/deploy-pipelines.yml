@@ -289,16 +289,6 @@ stages:
   - stage: "GreenDeployment_WaitForApproval"
     displayName: 'UAT green approval deployment'
     dependsOn: [ValidateCDCFlow,tag_docker_release,Release]
-    condition: |
-      and(
-        eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-        in(dependencies.ValidateCDCFlow.result, 'Succeeded', 'Skipped','Failed'),
-        in(dependencies.tag_docker_release.result, 'Succeeded'),
-        or(
-          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-          startsWith(variables['Build.SourceBranch'], 'refs/tags')
-        )
-      )
     variables:
       commitUrl: $[ stageDependencies.Release.build.outputs['chart_current_version.commitUrl'] ]
     jobs:
