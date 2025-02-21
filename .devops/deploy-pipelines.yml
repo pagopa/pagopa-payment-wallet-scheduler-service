@@ -279,7 +279,7 @@ stages:
 
   - stage: "GreenDeployment_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: [ValidateCDCFlow,tag_docker_release,Release]
+    dependsOn: [ValidateCDCFlow,Release]
     variables:
       commitUrl: $[ stageDependencies.Release.build.outputs['chart_current_version.commitUrl'] ]
     jobs:
