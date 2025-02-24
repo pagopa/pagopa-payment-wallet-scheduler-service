@@ -12,7 +12,7 @@ plugins {
 
 group = "it.pagopa.wallet"
 
-version = "0.5.7"
+version = "0.6.0"
 
 description = "pagopa-payment-wallet-scheduler-service"
 

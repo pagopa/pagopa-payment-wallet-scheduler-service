@@ -17,10 +17,10 @@ microservice-chart:
     envConfig:
       OTEL_SERVICE_NAME: "pagopa-payment-wallet-scheduler-service-blue"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-payment-wallet-scheduler-service-blue,deployment.environment=dev"
-    envSecret: { }
+    envSecret: {}
   image:
     repository: pagopaditncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
-    tag: "0.5.7"
+    tag: "0.6.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:

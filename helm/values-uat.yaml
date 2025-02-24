@@ -23,10 +23,10 @@ microservice-chart:
       PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2000-01-02T00:00:00Z"
       SCHEDULER_CDC_QUEUE_NAME: pagopa-u-itn-pay-wallet-cdc-queue-b
       SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks-beta"
-    envSecret: { }
+    envSecret: {}
   image:
     repository: pagopauitncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
-    tag: "0.5.7"
+    tag: "0.6.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
