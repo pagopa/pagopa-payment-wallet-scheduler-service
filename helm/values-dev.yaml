@@ -2,6 +2,22 @@ microservice-chart:
   namespace: "pay-wallet"
   nameOverride: ""
   fullnameOverride: "pagopa-pay-wallet-scheduler-service"
+  canaryDelivery:
+    create: false
+    ingress:
+      bluegreen: false
+      #set canary deployment with traffic balancing see https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#canary for more info
+      header: true
+      headerName: deployment
+      headerValue: blue
+      weightPercent: 10
+    image:
+      repository: pagopaditncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
+      tag: "latest"
+    envConfig:
+      OTEL_SERVICE_NAME: "pagopa-payment-wallet-scheduler-service-blue"
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-payment-wallet-scheduler-service-blue,deployment.environment=dev"
+    envSecret: { }
   image:
     repository: pagopaditncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
     tag: "0.5.7"
@@ -35,7 +51,7 @@ microservice-chart:
   serviceAccount:
     create: false
     annotations: {}
-    name: ""
+    name: "pay-wallet-workload-identity"
   podAnnotations: {}
   podSecurityContext:
     seccompProfile:
@@ -116,10 +132,6 @@ microservice-chart:
     name: "pagopa-d-pay-wallet-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
   nodeSelector: {}
-  canaryDelivery:
-    deployment:
-      image:
-        tag: ""
   tolerations:
     - effect: "NoSchedule"
       key: "paymentWalletOnly"
@@ -140,6 +152,8 @@ microservice-chart:
           podAffinityTerm:
             labelSelector:
               matchLabels:
-                aadpodidbinding: pay-wallet-pod-identity
+                app.kubernetes.io/instance: pagopapaymentwalletschedulerservice
             namespaces: ["pay-wallet"]
             topologyKey: topology.kubernetes.io/zone
+  azure:
+    workloadIdentityClientId: 8cad3639-cc88-4bff-85fe-5b1ddb2d449e
