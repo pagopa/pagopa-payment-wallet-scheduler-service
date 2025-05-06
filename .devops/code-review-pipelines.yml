@@ -5,7 +5,7 @@ variables:
 trigger: none
 
 pool:
-  vmImage: ubuntu-24.10
+  vmImage: ubuntu-24.04
 
 stages:
   - stage: BuildAndUnitTest
