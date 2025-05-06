@@ -5,12 +5,14 @@ variables:
 trigger: none
 
 pool:
-  vmImage: ubuntu-22.04
+  vmImage: ubuntu-latest
 
 stages:
   - stage: BuildAndUnitTest
     jobs:
       - job: make_buildEndUnitTest
+        container:
+          image: amazoncorretto:21-alpine@sha256:6a98c4402708fe8d16e946b4b5bac396379ec5104c1661e2a27b2b45cf9e2d16
         steps:
           - task: Cache@2
             inputs:
