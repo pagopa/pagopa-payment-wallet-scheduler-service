@@ -31,6 +31,7 @@ class OnboardedPaymentWalletJob(
 ) : ScheduledJob<OnboardedPaymentWalletJobConfiguration, String> {
 
     private val logger = LoggerFactory.getLogger(javaClass)
+
     override fun id(): String = "onboarded-payment-wallet-job"
 
     override fun process(configuration: OnboardedPaymentWalletJobConfiguration): Mono<String> {
