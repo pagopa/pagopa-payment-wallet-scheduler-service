@@ -117,7 +117,7 @@ microservice-chart:
     SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks"
     SCHEDULER_REDIS_JOB_LOCK_TTL_MS: "20000"
     SCHEDULER_REDIS_JOB_LOCK_WAIT_TIME_MS: "100"
-    REDIS_HOST: pagopa-d-itn-pay-wallet-redis.redis.cache.windows.net
+    REDIS_HOST: pagopa-d-itn-pay-wallet-redis-std.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     PAYMENT_WALLET_JOB_EXECUTION_CRON: "*/10 * * * * *"
@@ -126,7 +126,7 @@ microservice-chart:
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     MONGO_PASSWORD: mongo-wallet-password
-    REDIS_PASSWORD: redis-wallet-password
+    REDIS_PASSWORD: redis-std-wallet-password
     SCHEDULER_CDC_QUEUE_CONNECTION_STRING: wallet-storage-connection-string
   keyvault:
     name: "pagopa-d-pay-wallet-kv"
