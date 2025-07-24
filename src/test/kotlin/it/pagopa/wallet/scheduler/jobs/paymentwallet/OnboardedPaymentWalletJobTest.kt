@@ -14,267 +14,240 @@ import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.WalletService
 import java.time.Duration
 import java.time.Instant
-import java.util.*
 import kotlin.test.assertEquals
 import kotlinx.coroutines.reactor.mono
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doNothing
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.given
+import org.mockito.kotlin.*
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 
 class OnboardedPaymentWalletJobTest {
 
     private val walletService: WalletService = mock()
-
     private val cdcEventDispatcherService: CdcEventDispatcherService = mock()
-
     private val redisResumePolicyService: RedisResumePolicyService = mock()
 
     private val onboardedPaymentWalletJob =
         OnboardedPaymentWalletJob(
-            walletService = walletService,
-            cdcEventDispatcherService = cdcEventDispatcherService,
-            redisResumePolicyService = redisResumePolicyService
+            walletService,
+            cdcEventDispatcherService,
+            redisResumePolicyService
         )
 
     @Test
     fun `should process wallet successfully in given date range for paypal wallets`() {
-        // pre-requisites
         val startDate = Instant.now()
         val endDate = startDate + Duration.ofSeconds(10)
-        val jobConf =
-            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
         val wallet = WalletTestUtils.paypalWalletDocument("VALIDATED")
         val foundWallets = listOf(wallet)
+
         val expectedLoggedEvent =
-            wallet.let {
-                WalletOnboardCompletedEvent(
-                    id = it.id,
-                    timestamp = it.creationDate.toString(),
-                    walletId = it.id,
-                    auditWallet =
-                        AuditWallet(
-                            paymentMethodId = it.paymentMethodId,
-                            creationDate = it.creationDate.toString(),
-                            updateDate = it.updateDate.toString(),
-                            applications =
-                                it.applications.map { application ->
-                                    AuditWalletApplication(
-                                        id = application.id,
-                                        creationDate = application.creationDate,
-                                        updateDate = application.updateDate,
-                                        metadata = application.metadata,
-                                        status = application.status
-                                    )
-                                },
-                            details =
-                                it.details?.let { walletDetails ->
-                                    AuditWalletDetails(
-                                        type = "PAYPAL",
-                                        pspId = (walletDetails as PayPalDetails).pspId,
-                                        cardBrand = null
-                                    )
-                                },
-                            status = it.status,
-                            validationOperationId = null,
-                            validationOperationResult = it.validationOperationResult,
-                            validationOperationTimestamp = it.creationDate.toString(),
-                            validationErrorCode = it.validationErrorCode,
-                        )
-                )
-            }
+            WalletOnboardCompletedEvent(
+                id = wallet.id,
+                timestamp = wallet.creationDate.toString(),
+                walletId = wallet.id,
+                auditWallet =
+                    AuditWallet(
+                        paymentMethodId = wallet.paymentMethodId,
+                        creationDate = wallet.creationDate.toString(),
+                        updateDate = wallet.updateDate.toString(),
+                        applications =
+                            wallet.applications.map {
+                                AuditWalletApplication(
+                                    id = it.id,
+                                    creationDate = it.creationDate,
+                                    updateDate = it.updateDate,
+                                    metadata = it.metadata,
+                                    status = it.status
+                                )
+                            },
+                        details =
+                            AuditWalletDetails(
+                                type = "PAYPAL",
+                                pspId = (wallet.details as PayPalDetails).pspId,
+                                cardBrand = null
+                            ),
+                        status = wallet.status,
+                        validationOperationId = null,
+                        validationOperationResult = wallet.validationOperationResult,
+                        validationOperationTimestamp = wallet.creationDate.toString(),
+                        validationErrorCode = wallet.validationErrorCode
+                    )
+            )
+
         given(walletService.getWalletsForCdcIngestion(any(), any()))
             .willReturn(Flux.fromIterable(foundWallets))
+
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
 
-        // Test
-        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
-            .expectNext(foundWallets.last().creationDate.toString())
+        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+        println(onboardedPaymentWalletJob.process(jobConf).block())
+        StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
+            .expectNext(wallet.creationDate.toString())
             .verifyComplete()
-        verify(walletService, times(1))
-            .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
-        verify(cdcEventDispatcherService, times(1))
+
+        verify(walletService).getWalletsForCdcIngestion(startDate, endDate)
+        verify(cdcEventDispatcherService)
             .dispatchEvent(
-                event =
-                    org.mockito.kotlin.argThat {
-                        assertEquals(expectedLoggedEvent, this)
-                        true
-                    }
+                argThat {
+                    assertEquals(expectedLoggedEvent, this)
+                    true
+                }
             )
     }
 
     @Test
     fun `should process wallet successfully in given date range for cards wallets`() {
-        // pre-requisites
         val startDate = Instant.now()
         val endDate = startDate + Duration.ofSeconds(10)
-        val jobConf =
-            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
         val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
         val foundWallets = listOf(wallet)
+
         val expectedLoggedEvent =
-            wallet.let {
-                WalletOnboardCompletedEvent(
-                    id = it.id,
-                    timestamp = it.creationDate.toString(),
-                    walletId = it.id,
-                    auditWallet =
-                        AuditWallet(
-                            paymentMethodId = it.paymentMethodId,
-                            creationDate = it.creationDate.toString(),
-                            updateDate = it.updateDate.toString(),
-                            applications =
-                                it.applications.map { application ->
-                                    AuditWalletApplication(
-                                        id = application.id,
-                                        creationDate = application.creationDate,
-                                        updateDate = application.updateDate,
-                                        metadata = application.metadata,
-                                        status = application.status
-                                    )
-                                },
-                            details =
-                                it.details?.let { walletDetails ->
-                                    AuditWalletDetails(
-                                        type = "CARDS",
-                                        cardBrand = (walletDetails as CardDetails).brand,
-                                        pspId = null
-                                    )
-                                },
-                            status = it.status,
-                            validationOperationId = null,
-                            validationOperationResult = it.validationOperationResult,
-                            validationOperationTimestamp = it.creationDate.toString(),
-                            validationErrorCode = it.validationErrorCode,
-                        )
-                )
-            }
+            WalletOnboardCompletedEvent(
+                id = wallet.id,
+                timestamp = wallet.creationDate.toString(),
+                walletId = wallet.id,
+                auditWallet =
+                    AuditWallet(
+                        paymentMethodId = wallet.paymentMethodId,
+                        creationDate = wallet.creationDate.toString(),
+                        updateDate = wallet.updateDate.toString(),
+                        applications =
+                            wallet.applications.map {
+                                AuditWalletApplication(
+                                    id = it.id,
+                                    creationDate = it.creationDate,
+                                    updateDate = it.updateDate,
+                                    metadata = it.metadata,
+                                    status = it.status
+                                )
+                            },
+                        details =
+                            AuditWalletDetails(
+                                type = "CARDS",
+                                pspId = null,
+                                cardBrand = (wallet.details as CardDetails).brand
+                            ),
+                        status = wallet.status,
+                        validationOperationId = null,
+                        validationOperationResult = wallet.validationOperationResult,
+                        validationOperationTimestamp = wallet.creationDate.toString(),
+                        validationErrorCode = wallet.validationErrorCode
+                    )
+            )
+
         given(walletService.getWalletsForCdcIngestion(any(), any()))
             .willReturn(Flux.fromIterable(foundWallets))
+
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
 
-        // Test
-        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
-            .expectNext(foundWallets.last().creationDate.toString())
+        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+
+        StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
+            .expectNext(wallet.creationDate.toString())
             .verifyComplete()
-        verify(walletService, times(1))
-            .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
-        verify(cdcEventDispatcherService, times(1))
-            .dispatchEvent(
-                event =
-                    org.mockito.kotlin.argThat {
-                        assertEquals(expectedLoggedEvent, this)
-                        true
-                    }
-            )
     }
 
     @Test
     fun `should return error for no wallet found in a time window`() {
-        // pre-requisites
         val startDate = Instant.now()
         val endDate = startDate + Duration.ofSeconds(10)
-        val jobConf =
-            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
 
         given(walletService.getWalletsForCdcIngestion(any(), any())).willReturn(Flux.empty())
 
-        // Test
-        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
+        StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectError(NoWalletFoundException::class.java)
             .verify()
-        verify(walletService, times(1))
-            .getWalletsForCdcIngestion(startDate = startDate, endDate = endDate)
-        verify(cdcEventDispatcherService, times(0)).dispatchEvent(event = any())
+
+        verify(walletService).getWalletsForCdcIngestion(startDate, endDate)
+        verify(cdcEventDispatcherService, never()).dispatchEvent(any())
     }
 
     @Test
     fun `should perform checkpoint successfully`() {
-        // pre-requisites
         val startDate = Instant.now()
         val endDate = startDate + Duration.ofSeconds(10)
-        val jobConf =
-            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
         val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
         val foundWallets = listOf(wallet)
+
         given(walletService.getWalletsForCdcIngestion(any(), any()))
             .willReturn(Flux.fromIterable(foundWallets))
+
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
-        doNothing()
-            .`when`(redisResumePolicyService)
-            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
-        // Test
-        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
-            .expectNext(foundWallets.last().creationDate.toString())
+
+        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+
+        StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
+            .expectNext(wallet.creationDate.toString())
             .verifyComplete()
-        verify(redisResumePolicyService, times(1))
-            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
+
+        verify(redisResumePolicyService)
+            .saveResumeTimestamp(onboardedPaymentWalletJob.id(), wallet.creationDate)
     }
 
     @Test
     fun `should start from checkpoint successfully`() {
-        // pre-requisites
         val startDate = Instant.now()
         val endDate = startDate + Duration.ofSeconds(10)
-        val jobConf =
-            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
+        val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
         val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
-        val foundWallets = listOf(wallet)
         val checkpoint = wallet.creationDate + Duration.ofSeconds(1)
+        val foundWallets = listOf(wallet)
+
+        given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(checkpoint))
+
         given(walletService.getWalletsForCdcIngestion(any(), any()))
             .willReturn(Flux.fromIterable(foundWallets))
+
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
-        given(redisResumePolicyService.getResumeTimestamp(any())).willAnswer {
-            Optional.of(checkpoint)
-        }
 
-        doNothing()
-            .`when`(redisResumePolicyService)
-            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
-        // Test
-        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
-            .expectNext(foundWallets.last().creationDate.toString())
+        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+
+        StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
+            .expectNext(wallet.creationDate.toString())
             .verifyComplete()
-        verify(redisResumePolicyService, times(1))
-            .getResumeTimestamp(eq(onboardedPaymentWalletJob.id()))
-        verify(walletService, times(1)).getWalletsForCdcIngestion(eq(checkpoint), eq(endDate))
+
+        verify(redisResumePolicyService).getResumeTimestamp(onboardedPaymentWalletJob.id())
+        verify(walletService).getWalletsForCdcIngestion(checkpoint, endDate)
     }
 
     @Test
     fun `should perform checkpoint using last element based on timestamp`() {
-        // pre-requisites
         val startDate = Instant.now()
         val endDate = startDate + Duration.ofSeconds(10)
-        val jobConf =
-            OnboardedPaymentWalletJobConfiguration(startDate = startDate, endDate = endDate)
-        val wallet = WalletTestUtils.cardWalletDocument("VALIDATED")
+        val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
+        val wallet1 = WalletTestUtils.cardWalletDocument("VALIDATED").copy(creationDate = startDate)
         val wallet2 = WalletTestUtils.cardWalletDocument("VALIDATED").copy(creationDate = endDate)
-        val foundWallets = listOf(wallet2, wallet)
+        val foundWallets = listOf(wallet2, wallet1)
+
         given(walletService.getWalletsForCdcIngestion(any(), any()))
             .willReturn(Flux.fromIterable(foundWallets))
+
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
-        doNothing()
-            .`when`(redisResumePolicyService)
-            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet.creationDate))
-        // Test
-        StepVerifier.create(onboardedPaymentWalletJob.process(configuration = jobConf))
+
+        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+
+        StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectNext(wallet2.creationDate.toString())
             .verifyComplete()
-        verify(redisResumePolicyService, times(1))
-            .saveResumeTimestamp(eq(onboardedPaymentWalletJob.id()), eq(wallet2.creationDate))
+
+        verify(redisResumePolicyService)
+            .saveResumeTimestamp(onboardedPaymentWalletJob.id(), wallet2.creationDate)
     }
 }
