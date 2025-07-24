@@ -20,9 +20,9 @@ class RedisResumePolicyService(
         return redisTemplate.findByKeyspaceAndTarget(redisResumePolicyConfig.keyspace, target)
     }
 
-    override fun saveResumeTimestamp(target: String, timestamp: Instant) {
+    override fun saveResumeTimestamp(target: String, timestamp: Instant): Mono<Boolean> {
         logger.debug("Saving instant: {}", timestamp.toString())
-        redisTemplate.save(
+        return redisTemplate.save(
             redisResumePolicyConfig.keyspace,
             target,
             timestamp,

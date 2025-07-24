@@ -30,7 +30,7 @@ class RedisResumePolicyServiceTest {
     fun `redis resume policy will get resume timestamp in case of cache hit`() {
         val expected = Instant.now()
 
-        whenever(redisTemplate.findByKeyspaceAndTarget("test-keyspace", "target_test"))
+        whenever(redisTemplate.findByKeyspaceAndTarget(anyOrNull(), eq("target_test")))
             .thenReturn(Mono.just(expected))
 
         StepVerifier.create(redisResumePolicyService.getResumeTimestamp("target_test"))
@@ -41,7 +41,8 @@ class RedisResumePolicyServiceTest {
     @Test
     fun `redis resume policy will save resume timestamp`() {
         val expected: Instant = Instant.now()
-        doNothing().`when`(redisTemplate).save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        given(redisTemplate.save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+            .willReturn(Mono.just(true))
 
         redisResumePolicyService.saveResumeTimestamp("target_test", expected)
 

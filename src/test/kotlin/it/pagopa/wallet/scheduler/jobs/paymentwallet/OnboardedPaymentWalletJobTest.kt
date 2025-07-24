@@ -83,9 +83,11 @@ class OnboardedPaymentWalletJobTest {
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
+        given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(startDate))
 
-        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
-        println(onboardedPaymentWalletJob.process(jobConf).block())
+        given { redisResumePolicyService.saveResumeTimestamp(anyOrNull(), anyOrNull()) }
+            .willReturn(Mono.just(true))
+
         StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectNext(wallet.creationDate.toString())
             .verifyComplete()
@@ -148,8 +150,10 @@ class OnboardedPaymentWalletJobTest {
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
+        given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(startDate))
 
-        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+        given { redisResumePolicyService.saveResumeTimestamp(anyOrNull(), anyOrNull()) }
+            .willReturn(Mono.just(true))
 
         StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectNext(wallet.creationDate.toString())
@@ -163,6 +167,7 @@ class OnboardedPaymentWalletJobTest {
         val jobConf = OnboardedPaymentWalletJobConfiguration(startDate, endDate)
 
         given(walletService.getWalletsForCdcIngestion(any(), any())).willReturn(Flux.empty())
+        given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(startDate))
 
         StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectError(NoWalletFoundException::class.java)
@@ -186,8 +191,10 @@ class OnboardedPaymentWalletJobTest {
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
+        given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(startDate))
 
-        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+        given { redisResumePolicyService.saveResumeTimestamp(anyOrNull(), anyOrNull()) }
+            .willReturn(Mono.just(true))
 
         StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectNext(wallet.creationDate.toString())
@@ -208,14 +215,15 @@ class OnboardedPaymentWalletJobTest {
 
         given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(checkpoint))
 
+        given { redisResumePolicyService.saveResumeTimestamp(anyOrNull(), anyOrNull()) }
+            .willReturn(Mono.just(true))
+
         given(walletService.getWalletsForCdcIngestion(any(), any()))
             .willReturn(Flux.fromIterable(foundWallets))
 
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
-
-        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
 
         StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectNext(wallet.creationDate.toString())
@@ -240,8 +248,10 @@ class OnboardedPaymentWalletJobTest {
         given(cdcEventDispatcherService.dispatchEvent(any())).willAnswer {
             mono { it.arguments[0] }
         }
+        given(redisResumePolicyService.getResumeTimestamp(any())).willReturn(Mono.just(startDate))
 
-        doNothing().`when`(redisResumePolicyService).saveResumeTimestamp(any(), any())
+        given { redisResumePolicyService.saveResumeTimestamp(anyOrNull(), anyOrNull()) }
+            .willReturn(Mono.just(true))
 
         StepVerifier.create(onboardedPaymentWalletJob.process(jobConf))
             .expectNext(wallet2.creationDate.toString())

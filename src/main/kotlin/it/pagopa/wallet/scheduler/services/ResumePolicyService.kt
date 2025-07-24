@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono
 interface ResumePolicyService {
     fun getResumeTimestamp(target: String): Mono<Instant>
 
-    fun saveResumeTimestamp(target: String, timestamp: Instant)
+    fun saveResumeTimestamp(target: String, timestamp: Instant): Mono<Boolean>
 }

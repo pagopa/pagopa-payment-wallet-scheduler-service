@@ -11,8 +11,10 @@ import reactor.core.publisher.Mono
 class TimestampRedisTemplate(
     @Autowired private val redisTemplate: ReactiveRedisTemplate<String, Instant>
 ) {
-    fun save(keyspace: String, cdcTarget: String, instant: Instant, ttl: Duration) {
-        redisTemplate.opsForValue().set(compoundKeyWithKeyspace(keyspace, cdcTarget), instant, ttl)
+    fun save(keyspace: String, cdcTarget: String, instant: Instant, ttl: Duration): Mono<Boolean> {
+        return redisTemplate
+            .opsForValue()
+            .set(compoundKeyWithKeyspace(keyspace, cdcTarget), instant, ttl)
     }
 
     fun findByKeyspaceAndTarget(keyspace: String, cdcTarget: String): Mono<Instant> {

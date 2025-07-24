@@ -30,7 +30,8 @@ class ReactiveTimestampRedisTemplateTest {
     @Test
     fun `time stamp redis template saves instant`() {
         given { reactiveRedisTemplate.opsForValue() }.willReturn(valueOps)
-        doNothing().`when`(valueOps).set(anyOrNull(), anyOrNull(), any<Duration>())
+        given { valueOps.set(anyOrNull(), anyOrNull(), any<Duration>()) }
+            .willReturn(Mono.just(true))
 
         timestampRedisTemplate.save("keyspace", "target", Instant.now(), Duration.ofSeconds(0))
         verify(valueOps, times(1)).set(anyOrNull(), anyOrNull(), any<Duration>())
