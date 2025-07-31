@@ -16,7 +16,7 @@ import reactor.test.StepVerifier
 
 @ExtendWith(MockitoExtension::class)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
-class ReactiveTimestampRedisTemplateTest {
+class TimestampRedisTemplateTest {
 
     private val reactiveRedisTemplate: ReactiveRedisTemplate<String, Instant> = mock()
     private val valueOps: ReactiveValueOperations<String, Instant> = mock()
