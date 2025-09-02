@@ -4,7 +4,7 @@ plugins {
   id("org.springframework.boot") version "3.4.5"
   id("io.spring.dependency-management") version "1.1.6"
   id("com.diffplug.spotless") version "6.25.0"
-  id("org.sonarqube") version "4.0.0.2929"
+  id("org.sonarqube") version "6.2.0.5505"
   id("com.dipien.semantic-version") version "2.0.0" apply false
   jacoco
   application
@@ -70,6 +70,7 @@ dependencies {
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
   testImplementation("io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  implementation(kotlin("stdlib-jdk8"))
 }
 
 configurations {

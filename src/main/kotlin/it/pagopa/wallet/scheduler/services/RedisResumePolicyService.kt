@@ -7,6 +7,7 @@ import java.util.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import reactor.core.publisher.Mono
 
 @Service
 class RedisResumePolicyService(
@@ -15,13 +16,13 @@ class RedisResumePolicyService(
 ) : ResumePolicyService {
     private val logger = LoggerFactory.getLogger(RedisResumePolicyService::class.java)
 
-    override fun getResumeTimestamp(target: String): Optional<Instant> {
+    override fun getResumeTimestamp(target: String): Mono<Instant> {
         return redisTemplate.findByKeyspaceAndTarget(redisResumePolicyConfig.keyspace, target)
     }
 
-    override fun saveResumeTimestamp(target: String, timestamp: Instant) {
+    override fun saveResumeTimestamp(target: String, timestamp: Instant): Mono<Boolean> {
         logger.debug("Saving instant: {}", timestamp.toString())
-        redisTemplate.save(
+        return redisTemplate.save(
             redisResumePolicyConfig.keyspace,
             target,
             timestamp,
