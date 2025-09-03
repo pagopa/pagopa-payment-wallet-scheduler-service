@@ -38,11 +38,13 @@ class OnboardedPaymentWalletJob(
         val startDate = configuration.startDate
         val endDate = configuration.endDate
         logger.info("Starting payment wallet processing in time window {} - {}", startDate, endDate)
-        return Mono.fromCallable { redisResumePolicyService.getResumeTimestamp(id()) }
+        return redisResumePolicyService
+            .getResumeTimestamp(id())
             .subscribeOn(Schedulers.boundedElastic())
-            .flatMapMany {
+            .defaultIfEmpty(startDate)
+            .flatMapMany { effectiveStartDate ->
                 walletService.getWalletsForCdcIngestion(
-                    startDate = it.orElse(startDate),
+                    startDate = effectiveStartDate,
                     endDate = endDate
                 )
             }
