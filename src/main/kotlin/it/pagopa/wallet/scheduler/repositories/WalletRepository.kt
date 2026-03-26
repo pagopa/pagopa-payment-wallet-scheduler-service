@@ -20,4 +20,15 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
         status: String,
         limit: Int
     ): Flux<Wallet>
+
+    @Aggregation(
+        "{\$match: {'status':{'\$in':?0}}}",
+        "{\$sort: {'updateDate': 1}}",
+        "{\$limit: ?1}",
+    )
+    fun findByStatusesOrderByUpdateDateAsc(
+        statuses: List<String>,
+        limit: Int
+    ): Flux<Wallet>
+
 }

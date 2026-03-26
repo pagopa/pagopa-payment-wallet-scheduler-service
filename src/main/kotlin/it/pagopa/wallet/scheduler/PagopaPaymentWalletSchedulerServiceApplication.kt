@@ -1,7 +1,9 @@
 package it.pagopa.wallet.scheduler
 
+import it.pagopa.wallet.scheduler.config.MongoConfiguration
 import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig
+import it.pagopa.wallet.scheduler.config.properties.LifeCycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.config.properties.PaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
@@ -19,7 +21,8 @@ import reactor.core.publisher.Hooks
     RetrySendPolicyConfig::class,
     RedisResumePolicyConfig::class,
     RedisJobLockPolicyConfig::class,
-    PaymentWalletJobConfiguration::class
+    PaymentWalletJobConfiguration::class,
+    LifeCycleManagementJobConfiguration::class
 )
 @EnableScheduling
 class PagopaPaymentWalletSchedulerServiceApplication
