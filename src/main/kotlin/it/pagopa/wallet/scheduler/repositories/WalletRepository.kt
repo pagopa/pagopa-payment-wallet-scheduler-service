@@ -22,13 +22,13 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
     ): Flux<Wallet>
 
     @Aggregation(
-        "{\$match: {'status':{'\$in':?0}}}",
+        "{\$match: { 'ttl': null, 'status': {'\$nin':?0}, 'updateDate': {'\$lte': '?1'} }}",
         "{\$sort: {'updateDate': 1}}",
-        "{\$limit: ?1}",
+        "{\$limit: ?2}",
     )
-    fun findByStatusesOrderByUpdateDateAsc(
-        statuses: List<String>,
+    fun findByTtlNullAndStatusNotInAndUpdateDateBefore(
+        excludedStatuses: List<String>,
+        endDate: String,
         limit: Int
     ): Flux<Wallet>
-
 }
