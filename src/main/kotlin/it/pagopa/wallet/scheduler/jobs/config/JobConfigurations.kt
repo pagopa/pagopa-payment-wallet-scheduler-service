@@ -12,5 +12,5 @@ sealed class JobConfiguration
 data class OnboardedPaymentWalletJobConfiguration(val startDate: Instant, val endDate: Instant) :
     JobConfiguration()
 
-/** Update wallet job configuration */
-data class UpdateJobConfiguration(val limit: Int) : JobConfiguration()
+/** Lifecycle management job configuration */
+data class LifecycleManagementJobConfiguration(val endDate: Instant) : JobConfiguration()
