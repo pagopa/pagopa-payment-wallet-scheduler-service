@@ -42,7 +42,8 @@ object WalletTestUtils {
             version = 0,
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,
-            onboardingChannel = ONBOARDING_CHANNEL
+            onboardingChannel = ONBOARDING_CHANNEL,
+            ttl = 50
         )
     }
 
@@ -71,7 +72,8 @@ object WalletTestUtils {
             version = 0,
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,
-            onboardingChannel = ONBOARDING_CHANNEL
+            onboardingChannel = ONBOARDING_CHANNEL,
+            ttl = 50
         )
     }
 
