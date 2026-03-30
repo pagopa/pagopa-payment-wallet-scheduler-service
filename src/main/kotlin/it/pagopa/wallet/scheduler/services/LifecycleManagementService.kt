@@ -3,6 +3,7 @@ package it.pagopa.wallet.scheduler.services
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
+import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Duration
@@ -39,6 +40,7 @@ class LifecycleManagementService(
                 )
             }
             .doOnError { logger.error("Wallets search query failed!", it) }
+            .switchIfEmpty(Mono.error(NoWalletFoundException()))
             .collectMap({ wallet -> wallet.id }, { wallet -> calculateTtl(wallet) })
             .flatMap { walletBulkRepository.bulkUpdateTtl(it) }
     }
