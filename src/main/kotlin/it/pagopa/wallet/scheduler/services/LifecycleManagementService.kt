@@ -1,7 +1,8 @@
 package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.documents.wallets.Wallet
-import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementConfiguration
+import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
+import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Duration
@@ -16,23 +17,25 @@ import reactor.core.publisher.Mono
 class LifecycleManagementService(
     @param:Autowired val repository: WalletRepository,
     @param:Autowired val walletBulkRepository: WalletBulkRepository,
-    private val lifecycleManagementConfiguration: LifecycleManagementConfiguration
+    private val ttlConfig: LifecycleManagementTtlConfig,
+    private val queryConfig: LifecycleManagementQueryConfig
 ) {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     fun setWalletsTtl(endDate: Instant): Mono<Int> {
+        val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
         return repository
             .findByTtlNullAndStatusNotInAndUpdateDateBefore(
-                lifecycleManagementConfiguration.excludedStatuses,
+                queryConfig.excludedStatuses,
                 endDate.toString(),
-                lifecycleManagementConfiguration.limit
+                queryRate
             )
             .doFirst {
                 logger.info(
                     "Searching wallets for lifecycle management. End date [{}] - Excluded statuses  [{}] - Limit [{}]",
                     endDate,
-                    lifecycleManagementConfiguration.excludedStatuses,
-                    lifecycleManagementConfiguration.limit
+                    queryConfig.excludedStatuses,
+                    queryRate
                 )
             }
             .doOnError { logger.error("Wallets search query failed!", it) }
@@ -47,13 +50,13 @@ class LifecycleManagementService(
                     wallet.status == "DELETED" ||
                     wallet.status == "REPLACED"
             ) {
-                lifecycleManagementConfiguration.deletedWalletTtl
+                ttlConfig.deletedWalletTtl
             } else {
-                lifecycleManagementConfiguration.errorWalletTtl
+                ttlConfig.errorWalletTtl
             }
 
         val secondsFromLastUpdate = Duration.between(wallet.updateDate, Instant.now()).toSeconds()
         val ttl = (defaultTtl - secondsFromLastUpdate).toInt()
-        return if (ttl > 0) ttl else lifecycleManagementConfiguration.instantDeleteTtl
+        return if (ttl > 0) ttl else ttlConfig.instantDeleteTtl
     }
 }

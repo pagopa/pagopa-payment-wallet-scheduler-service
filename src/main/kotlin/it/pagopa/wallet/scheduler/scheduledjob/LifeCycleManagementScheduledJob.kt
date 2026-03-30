@@ -20,7 +20,7 @@ class LifeCycleManagementScheduledJob(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(cron = "\${lifecycle.job.execution.cron}")
+    @Scheduled(cron = "\${lifecycle-management-job.execution.cron}")
     fun processLifeCycleWallets() {
         val startTime = Instant.now()
         schedulerLockService
