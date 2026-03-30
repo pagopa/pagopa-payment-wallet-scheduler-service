@@ -4,10 +4,10 @@ import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementConfiguration
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
@@ -26,16 +26,16 @@ class LifecycleManagementService(
                 lifecycleManagementConfiguration.excludedStatuses,
                 endDate.toString(),
                 lifecycleManagementConfiguration.limit
-            ).doFirst {
+            )
+            .doFirst {
                 logger.info(
                     "Searching wallets for lifecycle management. End date [{}] - Excluded statuses  [{}] - Limit [{}]",
                     endDate,
                     lifecycleManagementConfiguration.excludedStatuses,
                     lifecycleManagementConfiguration.limit
                 )
-            }.doOnError {
-                logger.error("Wallets search query failed!", it)
             }
+            .doOnError { logger.error("Wallets search query failed!", it) }
             .collectMap({ wallet -> wallet.id }, { wallet -> calculateTtl(wallet) })
             .flatMap { walletBulkRepository.bulkUpdateTtl(it) }
     }
