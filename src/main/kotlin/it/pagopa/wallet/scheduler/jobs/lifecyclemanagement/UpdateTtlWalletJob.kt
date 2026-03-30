@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono
  */
 @Component
 class UpdateTtlWalletJob(
-    @Autowired private val lifecycleManagementService: LifecycleManagementService,
+    private val lifecycleManagementService: LifecycleManagementService,
 ) : ScheduledJob<LifecycleManagementJobConfiguration, Int> {
 
     private val logger = LoggerFactory.getLogger(javaClass)
