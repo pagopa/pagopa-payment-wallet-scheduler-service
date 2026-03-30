@@ -1,11 +1,12 @@
 package it.pagopa.wallet.scheduler.scheduledjob
 
-import it.pagopa.wallet.scheduler.config.properties.LifeCycleManagementJobConfiguration
-import it.pagopa.wallet.scheduler.jobs.config.UpdateJobConfiguration
+import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementConfiguration
+import it.pagopa.wallet.scheduler.jobs.config.LifecycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.jobs.lifecyclemanagement.UpdateTtlWalletJob
 import it.pagopa.wallet.scheduler.service.SchedulerLockService
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
@@ -15,7 +16,7 @@ import reactor.core.publisher.Mono
 @Service
 class LifeCycleManagementScheduledJob(
     @Autowired private val updateTtlWalletJob: UpdateTtlWalletJob,
-    @Autowired private val lifeCycleManagementJobConfiguration: LifeCycleManagementJobConfiguration,
+    @Autowired private val jobConfiguration: LifecycleManagementConfiguration,
     @Autowired private val schedulerLockService: SchedulerLockService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -29,13 +30,13 @@ class LifeCycleManagementScheduledJob(
             .flatMap { semaphoreId ->
                 updateTtlWalletJob
                     .process(
-                        UpdateJobConfiguration(lifeCycleManagementJobConfiguration.limit)
+                        LifecycleManagementJobConfiguration(
+                            Instant.now()
+                                .minus(jobConfiguration.excludedPeriodDays, ChronoUnit.DAYS)
+                        )
                     )
                     .doOnSuccess {
-                        logger.info(
-                            "Updated wallets with new ttl: [{}]",
-                            it
-                        )
+                        logger.info("Lifecycle management job completed. Updated wallets: {}", it)
                     }
                     .doOnError { logger.error("Exception processing lifecycle process", it) }
                     .doFinally {
