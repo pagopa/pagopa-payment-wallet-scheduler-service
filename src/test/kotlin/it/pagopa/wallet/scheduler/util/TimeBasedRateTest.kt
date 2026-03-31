@@ -30,7 +30,7 @@ class TimeBasedRateTest {
 
         @JvmStatic
         fun `Should calculate rate correctly for on two day range with rump up end at midnight`():
-                Stream<Arguments> =
+            Stream<Arguments> =
             Stream.of(
                 Arguments.of(LocalTime.of(22, 0), 100, "before range start"),
                 Arguments.of(LocalTime.of(23, 0), 100, "at range start"),
@@ -44,7 +44,7 @@ class TimeBasedRateTest {
 
         @JvmStatic
         fun `Should calculate rate correctly for on two day range with rump up end after midnight`():
-                Stream<Arguments> =
+            Stream<Arguments> =
             Stream.of(
                 Arguments.of(LocalTime.of(22, 0), 100, "before range start"),
                 Arguments.of(LocalTime.of(23, 0), 100, "at range start"),
@@ -75,7 +75,7 @@ class TimeBasedRateTest {
 
         @JvmStatic
         fun `Should fail initialization for invalid low or high rate parameter`():
-                Stream<Arguments> =
+            Stream<Arguments> =
             Stream.of(
                 Arguments.of(
                     0,
