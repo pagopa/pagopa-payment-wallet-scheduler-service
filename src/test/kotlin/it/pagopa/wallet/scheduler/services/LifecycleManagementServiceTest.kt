@@ -72,7 +72,7 @@ class LifecycleManagementServiceTest {
                 walletRepository.findByTtlNullAndStatusNotInAndUpdateDateBefore(
                     eq(queryConfig.excludedStatuses),
                     eq(endDate.toString()),
-                    any() // Accepting any rate calculated by the concrete QuerySettings class
+                    any()
                 )
             )
             .thenReturn(Flux.just(wallet))
