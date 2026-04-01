@@ -6,5 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 class LifecycleManagementTtlConfig(
     val shortTermRetentionSeconds: Int,
     val longTermRetentionSeconds: Int,
-    val instantDeleteTtl: Int
+    val instantDeleteTtlSeconds: Int
 )

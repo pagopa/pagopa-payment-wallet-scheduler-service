@@ -89,7 +89,7 @@ If you want to customize the application environment, reference this table:
 | LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_END_WINDOW         | End time for the high-rate processing window (HH:mm). This local time will be taken into account in the system default local time (for k8s unix env is UTC) but can vary depending on system settings   | string            |         |
 | LIFECYCLE_MANAGEMENT_JOB_TTL_SHORT_TERM_RETENTION_SECONDS        | Time to live for wallets in error status                                                                                                                                                                | number            |         |
 | LIFECYCLE_MANAGEMENT_JOB_TTL_LONG_TERM_RETENTION_SECONDS         | Standard time to live for lifecycle managed wallets                                                                                                                                                     | number            |         |
-| LIFECYCLE_MANAGEMENT_JOB_TTL_INSTANT_DELETE_TTL                  | Time to live for wallets marked for instant deletion                                                                                                                                                    | number            |         |
+| LIFECYCLE_MANAGEMENT_JOB_TTL_INSTANT_DELETE_TTL_SECONDS          | Time to live for wallets marked for instant deletion                                                                                                                                                    | number            |         |
 (*): for Mongo connection string options
 see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/connection/connection-options/#connection-options)
 
