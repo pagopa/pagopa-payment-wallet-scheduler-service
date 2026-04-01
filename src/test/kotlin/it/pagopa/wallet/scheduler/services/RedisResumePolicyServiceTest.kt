@@ -5,14 +5,14 @@ import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.ResumePolicyService
 import it.pagopa.wallet.scheduler.services.TimestampRedisTemplate
 import java.time.Instant
-import java.util.*
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.test.context.TestPropertySource
+import reactor.core.publisher.Mono
+import reactor.test.StepVerifier
 
 @ExtendWith(MockitoExtension::class)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -28,18 +28,21 @@ class RedisResumePolicyServiceTest {
 
     @Test
     fun `redis resume policy will get resume timestamp in case of cache hit`() {
-        val expected: Instant = Instant.now()
-        given { redisTemplate.findByKeyspaceAndTarget(anyOrNull(), anyOrNull()) }
-            .willReturn(Optional.of(expected))
+        val expected = Instant.now()
 
-        val actual = redisResumePolicyService.getResumeTimestamp("target_test")
-        Assertions.assertTrue(actual.isPresent && actual.get() == expected)
+        whenever(redisTemplate.findByKeyspaceAndTarget(anyOrNull(), eq("target_test")))
+            .thenReturn(Mono.just(expected))
+
+        StepVerifier.create(redisResumePolicyService.getResumeTimestamp("target_test"))
+            .expectNext(expected)
+            .verifyComplete()
     }
 
     @Test
     fun `redis resume policy will save resume timestamp`() {
         val expected: Instant = Instant.now()
-        doNothing().`when`(redisTemplate).save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        given(redisTemplate.save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+            .willReturn(Mono.just(true))
 
         redisResumePolicyService.saveResumeTimestamp("target_test", expected)
 

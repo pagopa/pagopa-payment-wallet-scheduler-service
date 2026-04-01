@@ -109,6 +109,7 @@ class LoggingEventMixinTest {
                 )
             )
     }
+
     private val serializationConfiguration = AzureStorageConfiguration()
     private val objectMapperBuilder = serializationConfiguration.cdcObjectMapperBuilder()
     private val objectMapper: ObjectMapper =

@@ -1,10 +1,10 @@
 plugins {
-  kotlin("jvm") version "1.9.25"
-  kotlin("plugin.spring") version "1.9.25"
-  id("org.springframework.boot") version "3.3.5"
+  kotlin("jvm") version "2.2.0"
+  kotlin("plugin.spring") version "2.2.0"
+  id("org.springframework.boot") version "3.4.5"
   id("io.spring.dependency-management") version "1.1.6"
-  id("com.diffplug.spotless") version "6.18.0"
-  id("org.sonarqube") version "4.0.0.2929"
+  id("com.diffplug.spotless") version "6.25.0"
+  id("org.sonarqube") version "6.2.0.5505"
   id("com.dipien.semantic-version") version "2.0.0" apply false
   jacoco
   application
@@ -12,7 +12,7 @@ plugins {
 
 group = "it.pagopa.wallet"
 
-version = "0.6.1"
+version = "0.10.0"
 
 description = "pagopa-payment-wallet-scheduler-service"
 
@@ -31,11 +31,11 @@ object Dependencies {
 dependencyLocking { lockAllConfigurations() }
 
 dependencyManagement {
-  imports { mavenBom("org.springframework.boot:spring-boot-dependencies:3.3.5") }
-  imports { mavenBom("com.azure.spring:spring-cloud-azure-dependencies:5.13.0") }
+  imports { mavenBom("org.springframework.boot:spring-boot-dependencies:3.4.5") }
+  imports { mavenBom("com.azure.spring:spring-cloud-azure-dependencies:5.22.0") }
   // Kotlin BOM
-  imports { mavenBom("org.jetbrains.kotlin:kotlin-bom:1.7.22") }
-  imports { mavenBom("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4") }
+  imports { mavenBom("org.jetbrains.kotlin:kotlin-bom:2.2.0") }
+  imports { mavenBom("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.10.2") }
 }
 
 dependencies {
@@ -53,7 +53,7 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-  testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.16.1")
+  testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.20.0")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   // otel api
   implementation("io.opentelemetry:opentelemetry-api:${Dependencies.openTelemetryVersion}")
@@ -70,6 +70,7 @@ dependencies {
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
   testImplementation("io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  implementation(kotlin("stdlib-jdk8"))
 }
 
 configurations {

@@ -24,6 +24,7 @@ import it.pagopa.wallet.scheduler.common.serialization.LoggingEventMixin.Compani
 )
 interface LoggingEventMixin {
     @JsonProperty("_id") fun getId(): String?
+
     companion object {
         const val WALLET_APPLICATIONS_UPDATE_TYPE =
             "it.pagopa.wallet.audit.WalletApplicationsUpdatedEvent"
