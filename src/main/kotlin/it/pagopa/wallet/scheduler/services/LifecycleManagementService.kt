@@ -8,6 +8,8 @@ import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Duration
 import java.time.Instant
+import java.time.Period
+import java.time.temporal.TemporalAmount
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,19 +48,19 @@ class LifecycleManagementService(
     }
 
     private fun calculateTtl(wallet: Wallet): Int {
-        val calculatedTtl =
+        val calculatedTtl: TemporalAmount =
             if (
                 wallet.validationOperationResult == "EXECUTED" ||
                     wallet.status == "DELETED" ||
                     wallet.status == "REPLACED"
             ) {
-                ttlConfig.longTermRetentionSeconds
+                Period.ofYears(ttlConfig.longTermRetentionYears)
             } else {
-                ttlConfig.shortTermRetentionSeconds
+                Duration.ofDays(ttlConfig.shortTermRetentionDays.toLong())
             }
 
-        val secondsFromLastUpdate = Duration.between(wallet.updateDate, Instant.now()).toSeconds()
-        val ttl = (calculatedTtl - secondsFromLastUpdate).toInt()
+        val whenToDelete = wallet.updateDate + calculatedTtl
+        val ttl = Duration.between(Instant.now(), whenToDelete).toSeconds().toInt()
         return if (ttl > 0) ttl else ttlConfig.instantDeleteTtlSeconds
     }
 }

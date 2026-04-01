@@ -17,7 +17,7 @@ microservice-chart:
     envConfig:
       OTEL_SERVICE_NAME: "pagopa-payment-wallet-scheduler-service-blue"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-payment-wallet-scheduler-service-blue,deployment.environment=prod"
-    envSecret: {}
+    envSecret: { }
   image:
     repository: pagopapitncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
     tag: "0.10.0"
@@ -51,9 +51,9 @@ microservice-chart:
     servicePort: 8080
   serviceAccount:
     create: false
-    annotations: {}
+    annotations: { }
     name: "pay-wallet-workload-identity"
-  podAnnotations: {}
+  podAnnotations: { }
   podSecurityContext:
     seccompProfile:
       type: RuntimeDefault
@@ -134,8 +134,8 @@ microservice-chart:
     LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_RAMP_UP_DURATION_SECONDS: "7200" #to tune up
     LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_START_WINDOW: "22:00" #to tune up
     LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_END_WINDOW: "06:00" #to tune up
-    LIFECYCLE_MANAGEMENT_JOB_TTL_SHORT_TERM_RETENTION_SECONDS: "7776000" # 90 days -> 60 x 60 x 24 x 90
-    LIFECYCLE_MANAGEMENT_JOB_TTL_LONG_TERM_RETENTION_SECONDS: "315360000" # 10 years -> 60 x 60 x 24 x 365 x 10
+    LIFECYCLE_MANAGEMENT_JOB_TTL_SHORT_TERM_RETENTION_DAYS: "90"
+    LIFECYCLE_MANAGEMENT_JOB_TTL_LONG_TERM_RETENTION_YEARS: "10"
     LIFECYCLE_MANAGEMENT_JOB_TTL_INSTANT_DELETE_TTL_SECONDS: "5"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
@@ -145,7 +145,7 @@ microservice-chart:
   keyvault:
     name: "pagopa-p-pay-wallet-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
-  nodeSelector: {}
+  nodeSelector: { }
   tolerations:
     - effect: "NoSchedule"
       key: "paymentWalletOnly"
@@ -167,7 +167,7 @@ microservice-chart:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/instance: pagopapaymentwalletschedulerservice
-            namespaces: ["pay-wallet"]
+            namespaces: [ "pay-wallet" ]
             topologyKey: topology.kubernetes.io/zone
   azure:
     workloadIdentityClientId: 48a74dad-26f3-4916-ba45-ddda27d950b1

@@ -8,7 +8,8 @@ This application is designed to define and execute every scheduled process relat
 ## Api Documentation 📖
 
 See
-[//]CHANGE IT: the [OpenAPI 3 here.](https://editor.swagger.io/?url=https://raw.githubusercontent.com/pagopa/pagopa-wallet-service/main/api-spec/wallet-api.yaml)
+[//]CHANGE IT:
+the [OpenAPI 3 here.](https://editor.swagger.io/?url=https://raw.githubusercontent.com/pagopa/pagopa-wallet-service/main/api-spec/wallet-api.yaml)
 
 ---
 
@@ -38,7 +39,6 @@ $ cp .env.local .env
 to get a good default configuration.
 
 If you want to customize the application environment, reference this table:
-
 
 | Variable name                                                    | Description                                                                                                                                                                                             | type              | default |
 |------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|---------|
@@ -87,9 +87,10 @@ If you want to customize the application environment, reference this table:
 | LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_RAMP_UP_DURATION_SECONDS | Duration in seconds to scale from low rate to high rate                                                                                                                                                 | number            |         |
 | LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_START_WINDOW       | Start time for the high-rate processing window (HH:mm). This local time will be taken into account in the system default local time (for k8s unix env is UTC) but can vary depending on system settings | string            |         |
 | LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_END_WINDOW         | End time for the high-rate processing window (HH:mm). This local time will be taken into account in the system default local time (for k8s unix env is UTC) but can vary depending on system settings   | string            |         |
-| LIFECYCLE_MANAGEMENT_JOB_TTL_SHORT_TERM_RETENTION_SECONDS        | Time to live for wallets in error status                                                                                                                                                                | number            |         |
-| LIFECYCLE_MANAGEMENT_JOB_TTL_LONG_TERM_RETENTION_SECONDS         | Standard time to live for lifecycle managed wallets                                                                                                                                                     | number            |         |
+| LIFECYCLE_MANAGEMENT_JOB_TTL_SHORT_TERM_RETENTION_DAYS           | Time to live for wallets in error status                                                                                                                                                                | number            |         |
+| LIFECYCLE_MANAGEMENT_JOB_TTL_LONG_TERM_RETENTION_YEARS           | Standard time to live for lifecycle managed wallets                                                                                                                                                     | number            |         |
 | LIFECYCLE_MANAGEMENT_JOB_TTL_INSTANT_DELETE_TTL_SECONDS          | Time to live for wallets marked for instant deletion                                                                                                                                                    | number            |         |
+
 (*): for Mongo connection string options
 see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/connection/connection-options/#connection-options)
 
