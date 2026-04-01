@@ -46,19 +46,19 @@ class LifecycleManagementService(
     }
 
     private fun calculateTtl(wallet: Wallet): Int {
-        val defaultTtl =
+        val calculatedTtl =
             if (
                 wallet.validationOperationResult == "EXECUTED" ||
                     wallet.status == "DELETED" ||
                     wallet.status == "REPLACED"
             ) {
-                ttlConfig.deletedWalletTtl
+                ttlConfig.longTermRetentionSeconds
             } else {
-                ttlConfig.errorWalletTtl
+                ttlConfig.shortTermRetentionSeconds
             }
 
         val secondsFromLastUpdate = Duration.between(wallet.updateDate, Instant.now()).toSeconds()
-        val ttl = (defaultTtl - secondsFromLastUpdate).toInt()
+        val ttl = (calculatedTtl - secondsFromLastUpdate).toInt()
         return if (ttl > 0) ttl else ttlConfig.instantDeleteTtl
     }
 }

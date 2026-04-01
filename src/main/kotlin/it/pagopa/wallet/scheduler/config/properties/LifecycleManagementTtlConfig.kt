@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("lifecycle-management-job.ttl")
 class LifecycleManagementTtlConfig(
-    val errorWalletTtl: Int,
-    val deletedWalletTtl: Int,
+    val shortTermRetentionSeconds: Int,
+    val longTermRetentionSeconds: Int,
     val instantDeleteTtl: Int
 )

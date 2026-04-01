@@ -4,5 +4,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("lifecycle-management-job.execution")
 class LifecycleManagementConfiguration(
-    val excludedPeriodDays: Long,
+    val daysThreshold: Long,
 )

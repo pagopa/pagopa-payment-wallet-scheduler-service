@@ -30,8 +30,7 @@ class LifeCycleManagementScheduledJob(
                 updateTtlWalletJob
                     .process(
                         LifecycleManagementJobConfiguration(
-                            Instant.now()
-                                .minus(jobConfiguration.excludedPeriodDays, ChronoUnit.DAYS)
+                            Instant.now().minus(jobConfiguration.daysThreshold, ChronoUnit.DAYS)
                         )
                     )
                     .doOnSuccess {
