@@ -22,5 +22,5 @@ data class Wallet(
     val creationDate: Instant,
     val updateDate: Instant,
     val onboardingChannel: String,
-    val ttl: Int
+    val ttl: Int?
 )
