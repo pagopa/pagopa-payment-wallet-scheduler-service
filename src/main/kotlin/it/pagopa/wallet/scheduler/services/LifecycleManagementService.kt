@@ -59,6 +59,6 @@ class LifecycleManagementService(
 
         val secondsFromLastUpdate = Duration.between(wallet.updateDate, Instant.now()).toSeconds()
         val ttl = (calculatedTtl - secondsFromLastUpdate).toInt()
-        return if (ttl > 0) ttl else ttlConfig.instantDeleteTtl
+        return if (ttl > 0) ttl else ttlConfig.instantDeleteTtlSeconds
     }
 }
