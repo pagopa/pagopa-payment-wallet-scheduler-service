@@ -6,16 +6,16 @@ import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
-import java.time.Duration
-import java.time.Instant
-import java.time.Period
-import java.time.ZoneOffset
-import java.time.temporal.TemporalAmount
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
+import java.time.Duration
+import java.time.Instant
+import java.time.Period
+import java.time.ZoneOffset
+import java.time.temporal.TemporalAmount
 
 @Service
 class LifecycleManagementService(
@@ -52,15 +52,15 @@ class LifecycleManagementService(
         val calculatedTtl: TemporalAmount? =
             if (
                 wallet.validationOperationResult == "EXECUTED" ||
-                    wallet.status == "DELETED" ||
-                    wallet.status == "REPLACED"
+                wallet.status == "DELETED" ||
+                wallet.status == "REPLACED"
             ) {
                 Period.ofYears(ttlConfig.longTermRetentionYears)
             } else if (
                 wallet.status == "CREATED" ||
-                    wallet.status == "INITIALIZED" ||
-                    wallet.status == "VALIDATION_REQUESTED" ||
-                    wallet.status == "ERROR"
+                wallet.status == "INITIALIZED" ||
+                wallet.status == "VALIDATION_REQUESTED" ||
+                wallet.status == "ERROR"
             ) {
                 Duration.ofDays(ttlConfig.shortTermRetentionDays.toLong())
             } else {
@@ -72,7 +72,7 @@ class LifecycleManagementService(
         )
         val whenToDelete = wallet.updateDate.atZone(ZoneOffset.UTC).plus(calculatedTtl)
         // safe cast to int here: configuration values range checked during service startup, here
-        // cannot be greater that 68 years
+        // cannot be greater than 68 years
         val ttl = Duration.between(Instant.now(), whenToDelete).toSeconds().toInt()
         return if (ttl > 0) ttl else ttlConfig.instantDeleteTtlSeconds
     }
