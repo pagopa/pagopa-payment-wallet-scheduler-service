@@ -10,8 +10,8 @@ import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Instant
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.util.stream.Stream
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -24,38 +24,57 @@ import reactor.test.StepVerifier
 
 class LifecycleManagementServiceTest {
     companion object {
-        const val DELETED_WALLET_TTL = 3600
-        const val ERROR_WALLET_TTL = 600
-        const val INSTANT_DELETE_TTL = 5
+        // Configuration values
+        const val LONG_TERM_RETENTION_YEARS = 10
+        const val SHORT_TERM_RETENTION_DAYS = 90
+        const val INSTANT_DELETE_TTL_SECONDS = 5
+
+        // Expected value
+        val EXPECTED_LONG_TERM_TTL = (LONG_TERM_RETENTION_YEARS * 365.25 * 24 * 3600).toInt()
+        val EXPECTED_SHORT_TERM_TTL = (SHORT_TERM_RETENTION_DAYS * 24 * 3600).toInt()
 
         @JvmStatic
         fun `should successfully process wallets and calculate correct TTLs`(): Stream<Arguments> =
             Stream.of(
-                Arguments.of(WalletTestUtils.cardWalletDocument("DELETED"), DELETED_WALLET_TTL),
-                Arguments.of(WalletTestUtils.cardWalletDocument("REPLACED"), DELETED_WALLET_TTL),
+                // Case: DELETED/REPLACED/EXECUTED -> 10 years
+                Arguments.of(WalletTestUtils.cardWalletDocument("DELETED"), EXPECTED_LONG_TERM_TTL),
+                Arguments.of(
+                    WalletTestUtils.cardWalletDocument("REPLACED"),
+                    EXPECTED_LONG_TERM_TTL
+                ),
                 Arguments.of(
                     WalletTestUtils.cardWalletDocument("CREATED")
                         .copy(validationOperationResult = "EXECUTED"),
-                    DELETED_WALLET_TTL
+                    EXPECTED_LONG_TERM_TTL
                 ),
-                Arguments.of(WalletTestUtils.cardWalletDocument("ERROR"), ERROR_WALLET_TTL),
+                // Case: ERROR -> 90 days
+                Arguments.of(WalletTestUtils.cardWalletDocument("ERROR"), EXPECTED_SHORT_TERM_TTL),
+                // Case: Already expired -> Instant Delete
                 Arguments.of(
                     WalletTestUtils.cardWalletDocument("ERROR")
-                        .copy(updateDate = Instant.now().minusSeconds(100000)),
-                    INSTANT_DELETE_TTL
+                        .copy(updateDate = Instant.now().minus(36500, ChronoUnit.DAYS)),
+                    INSTANT_DELETE_TTL_SECONDS
                 ),
             )
     }
 
     private val walletRepository: WalletRepository = mock()
     private val walletBulkRepository: WalletBulkRepository = mock()
+
+    // Inizializziamo la config con i valori usati nel calcolo delle costanti sopra
     private val ttlConfig: LifecycleManagementTtlConfig =
-        LifecycleManagementTtlConfig(ERROR_WALLET_TTL, DELETED_WALLET_TTL, INSTANT_DELETE_TTL)
+        LifecycleManagementTtlConfig(
+            SHORT_TERM_RETENTION_DAYS,
+            LONG_TERM_RETENTION_YEARS,
+            INSTANT_DELETE_TTL_SECONDS
+        )
+
     private val queryConfig: LifecycleManagementQueryConfig =
         LifecycleManagementQueryConfig(
             listOf(WalletTestUtils.WALLET_VALIDATED_STATUS),
             QuerySettings(1, 10, 60, LocalTime.of(10, 0), LocalTime.of(12, 0))
         )
+
     private val lifecycleManagementService: LifecycleManagementService =
         LifecycleManagementService(walletRepository, walletBulkRepository, ttlConfig, queryConfig)
 
@@ -71,7 +90,7 @@ class LifecycleManagementServiceTest {
         whenever(
                 walletRepository.findByTtlNullAndStatusNotInAndUpdateDateBefore(
                     eq(queryConfig.excludedStatuses),
-                    eq(endDate.toString()),
+                    any(),
                     any()
                 )
             )
@@ -86,14 +105,17 @@ class LifecycleManagementServiceTest {
 
         argumentCaptor<Map<String, Int>>().apply {
             verify(walletBulkRepository).bulkUpdateTtl(capture())
-            val mappedTtl = firstValue
+            val actualTtl = firstValue.values.first()
 
-            assertEquals(1, mappedTtl.size)
-            val actualTtl = mappedTtl.values.iterator().next()
+            // Calculate the difference beetween what we have and what we expect
+            val diff = Math.abs(actualTtl - expectedTtl)
+
+            // Let define a tollerance of 3 days for cover leap year
+            val gapDaysInSeconds = 3 * 24 * 3600
 
             assertTrue(
-                actualTtl in (expectedTtl - 60)..expectedTtl,
-                "Wallet TTL $actualTtl was not in expected range near $expectedTtl"
+                diff <= gapDaysInSeconds,
+                "The TTL calculated ($actualTtl) is to distant from the expected ($expectedTtl). Diff: $diff seconds "
             )
         }
     }

@@ -1,6 +1,6 @@
 package it.pagopa.wallet.scheduler.scheduledjob
 
-import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementConfiguration
+import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementExecutionConfig
 import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
 import it.pagopa.wallet.scheduler.jobs.lifecyclemanagement.UpdateTtlWalletJob
 import it.pagopa.wallet.scheduler.service.SchedulerLockService
@@ -17,8 +17,8 @@ import reactor.core.publisher.Mono
 class LifeCycleManagementScheduledJobTest {
 
     private val updateTtlWalletJob: UpdateTtlWalletJob = mock()
-    private val jobConfiguration: LifecycleManagementConfiguration =
-        LifecycleManagementConfiguration(90) // 3 mounth excluded
+    private val jobConfiguration: LifecycleManagementExecutionConfig =
+        LifecycleManagementExecutionConfig(90) // 3 mounth excluded
     private val schedulerLockService: SchedulerLockService = mock()
 
     private val lifeCycleManagementScheduledJob: LifeCycleManagementScheduledJob =

@@ -1,6 +1,6 @@
 package it.pagopa.wallet.scheduler.scheduledjob
 
-import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementConfiguration
+import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementExecutionConfig
 import it.pagopa.wallet.scheduler.jobs.config.LifecycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.jobs.lifecyclemanagement.UpdateTtlWalletJob
 import it.pagopa.wallet.scheduler.service.SchedulerLockService
@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono
 @Service
 class LifeCycleManagementScheduledJob(
     private val updateTtlWalletJob: UpdateTtlWalletJob,
-    private val jobConfiguration: LifecycleManagementConfiguration,
+    private val jobConfiguration: LifecycleManagementExecutionConfig,
     private val schedulerLockService: SchedulerLockService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)

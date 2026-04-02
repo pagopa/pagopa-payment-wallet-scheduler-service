@@ -9,6 +9,7 @@ import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Duration
 import java.time.Instant
 import java.time.Period
+import java.time.ZoneOffset
 import java.time.temporal.TemporalAmount
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -59,8 +60,32 @@ class LifecycleManagementService(
                 Duration.ofDays(ttlConfig.shortTermRetentionDays.toLong())
             }
 
-        val whenToDelete = wallet.updateDate + calculatedTtl
-        val ttl = Duration.between(Instant.now(), whenToDelete).toSeconds().toInt()
-        return if (ttl > 0) ttl else ttlConfig.instantDeleteTtlSeconds
+        val whenToDelete = wallet.updateDate.atZone(ZoneOffset.UTC).plus(calculatedTtl)
+        val ttlLong = Duration.between(Instant.now(), whenToDelete).toSeconds()
+        val ttlInt =
+            if (ttlLong < 0) {
+                // Overflow case, this can happen if the value of 'whenToDelete' is more distant
+                // than 68 years in the past
+                // The convertion to Int of a Long too big will cause an overflow and change the
+                // sign of the number
+                if (ttlLong < Int.MIN_VALUE.toLong()) {
+                    Int.MIN_VALUE
+                } else {
+                    -(ttlLong.toInt())
+                }
+            } else {
+                // Overflow case, can happen if the value 'whenToDelete' is to distant in the
+                // future, this could not be possible
+                // only in case of error on the wallet data, the updateDate plus the calculcatedTtl
+                // must be major that 68 years
+                // The convertion to Int of a Long too big will cause an overflow and change the
+                // sign of the number
+                if (ttlLong > Int.MAX_VALUE.toLong()) {
+                    Int.MAX_VALUE
+                } else {
+                    ttlLong.toInt()
+                }
+            }
+        return if (ttlInt > 0) ttlInt else ttlConfig.instantDeleteTtlSeconds
     }
 }
