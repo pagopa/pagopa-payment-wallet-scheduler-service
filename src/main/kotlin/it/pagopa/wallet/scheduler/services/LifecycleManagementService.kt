@@ -6,16 +6,16 @@ import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
 import java.time.Duration
 import java.time.Instant
 import java.time.Period
 import java.time.ZoneOffset
 import java.time.temporal.TemporalAmount
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import reactor.core.publisher.Mono
 
 @Service
 class LifecycleManagementService(
@@ -24,7 +24,11 @@ class LifecycleManagementService(
     private val ttlConfig: LifecycleManagementTtlConfig,
     private val queryConfig: LifecycleManagementQueryConfig
 ) {
+
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
+    val shortTermAllowedStatuses = setOf("CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR")
+    val longTermAllowedStatuses = setOf("DELETED", "REPLACED")
+    val npgValidOperationResult = setOf("EXECUTED")
 
     fun setWalletsTtl(endDate: Instant): Mono<Int> {
         val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
@@ -49,27 +53,34 @@ class LifecycleManagementService(
     }
 
     private fun calculateTtl(wallet: Wallet): Int {
+        val isNpgValidOperationResult = wallet.validationOperationResult in npgValidOperationResult
+        val isLongTermStatus = wallet.status in longTermAllowedStatuses
+        val isShortTermStatus = wallet.status in shortTermAllowedStatuses
         val calculatedTtl: TemporalAmount? =
-            if (
-                wallet.validationOperationResult == "EXECUTED" ||
-                wallet.status == "DELETED" ||
-                wallet.status == "REPLACED"
-            ) {
+            if (isLongTermStatus || isNpgValidOperationResult) {
                 Period.ofYears(ttlConfig.longTermRetentionYears)
-            } else if (
-                wallet.status == "CREATED" ||
-                wallet.status == "INITIALIZED" ||
-                wallet.status == "VALIDATION_REQUESTED" ||
-                wallet.status == "ERROR"
-            ) {
+            } else if (isShortTermStatus) {
                 Duration.ofDays(ttlConfig.shortTermRetentionDays.toLong())
             } else {
                 // Other case we are not allow to delete
-                return -1
+                null
             }
-        logger.info(
-            "{}",
+        logger.debug(
+            "wallet: [{}], isNpgValidOperationResult: [{}], isLongTermStatus: [{}], isShortTermStatus: [{}] -> Calculated ttl: [{}]",
+            wallet,
+            isNpgValidOperationResult,
+            isLongTermStatus,
+            isShortTermStatus,
+            calculatedTtl
         )
+        if (calculatedTtl == null) {
+            logger.warn(
+                "Unhandled wallet status: [{}], wallet id: [{}]. TTL field will be set to -1 (not expire)",
+                wallet.status,
+                wallet.id
+            )
+            return -1
+        }
         val whenToDelete = wallet.updateDate.atZone(ZoneOffset.UTC).plus(calculatedTtl)
         // safe cast to int here: configuration values range checked during service startup, here
         // cannot be greater than 68 years
