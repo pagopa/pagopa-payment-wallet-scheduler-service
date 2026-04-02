@@ -49,17 +49,25 @@ class LifecycleManagementService(
     }
 
     private fun calculateTtl(wallet: Wallet): Int {
-        val calculatedTtl: TemporalAmount =
+        val calculatedTtl: TemporalAmount? =
             if (
                 wallet.validationOperationResult == "EXECUTED" ||
                     wallet.status == "DELETED" ||
                     wallet.status == "REPLACED"
             ) {
                 Period.ofYears(ttlConfig.longTermRetentionYears)
-            } else {
+            } else if(
+                wallet.status == "CREATED" ||
+                wallet.status == "INITIALIZED" ||
+                wallet.status == "VALIDATION_REQUESTED" ||
+                wallet.status == "ERROR"
+            ){
                 Duration.ofDays(ttlConfig.shortTermRetentionDays.toLong())
+            } else {
+                // Other case we are not allow to delete
+                return -1
             }
-
+        logger.info("{}",)
         val whenToDelete = wallet.updateDate.atZone(ZoneOffset.UTC).plus(calculatedTtl)
         val ttlLong = Duration.between(Instant.now(), whenToDelete).toSeconds()
         val ttlInt =
