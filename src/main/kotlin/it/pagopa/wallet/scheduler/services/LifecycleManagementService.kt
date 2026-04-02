@@ -56,44 +56,24 @@ class LifecycleManagementService(
                     wallet.status == "REPLACED"
             ) {
                 Period.ofYears(ttlConfig.longTermRetentionYears)
-            } else if(
+            } else if (
                 wallet.status == "CREATED" ||
-                wallet.status == "INITIALIZED" ||
-                wallet.status == "VALIDATION_REQUESTED" ||
-                wallet.status == "ERROR"
-            ){
+                    wallet.status == "INITIALIZED" ||
+                    wallet.status == "VALIDATION_REQUESTED" ||
+                    wallet.status == "ERROR"
+            ) {
                 Duration.ofDays(ttlConfig.shortTermRetentionDays.toLong())
             } else {
                 // Other case we are not allow to delete
                 return -1
             }
-        logger.info("{}",)
+        logger.info(
+            "{}",
+        )
         val whenToDelete = wallet.updateDate.atZone(ZoneOffset.UTC).plus(calculatedTtl)
-        val ttlLong = Duration.between(Instant.now(), whenToDelete).toSeconds()
-        val ttlInt =
-            if (ttlLong < 0) {
-                // Overflow case, this can happen if the value of 'whenToDelete' is more distant
-                // than 68 years in the past
-                // The convertion to Int of a Long too big will cause an overflow and change the
-                // sign of the number
-                if (ttlLong < Int.MIN_VALUE.toLong()) {
-                    Int.MIN_VALUE
-                } else {
-                    -(ttlLong.toInt())
-                }
-            } else {
-                // Overflow case, can happen if the value 'whenToDelete' is to distant in the
-                // future, this could not be possible
-                // only in case of error on the wallet data, the updateDate plus the calculcatedTtl
-                // must be major that 68 years
-                // The convertion to Int of a Long too big will cause an overflow and change the
-                // sign of the number
-                if (ttlLong > Int.MAX_VALUE.toLong()) {
-                    Int.MAX_VALUE
-                } else {
-                    ttlLong.toInt()
-                }
-            }
-        return if (ttlInt > 0) ttlInt else ttlConfig.instantDeleteTtlSeconds
+        // safe cast to int here: configuration values range checked during service startup, here
+        // cannot be greater that 68 years
+        val ttl = Duration.between(Instant.now(), whenToDelete).toSeconds().toInt()
+        return if (ttl > 0) ttl else ttlConfig.instantDeleteTtlSeconds
     }
 }
