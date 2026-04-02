@@ -10,6 +10,7 @@ import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import java.time.Instant
 import java.time.LocalTime
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -29,32 +30,41 @@ class LifecycleManagementServiceTest {
         const val SHORT_TERM_RETENTION_DAYS = 90
         const val INSTANT_DELETE_TTL_SECONDS = 5
 
-        // Expected value
-        val EXPECTED_LONG_TERM_TTL = (LONG_TERM_RETENTION_YEARS * 365.25 * 24 * 3600).toInt()
-        val EXPECTED_SHORT_TERM_TTL = (SHORT_TERM_RETENTION_DAYS * 24 * 3600).toInt()
-
         @JvmStatic
         fun `should successfully process wallets and calculate correct TTLs`(): Stream<Arguments> =
             Stream.of(
-                // Case: DELETED/REPLACED/EXECUTED -> 10 years
-                Arguments.of(WalletTestUtils.cardWalletDocument("DELETED"), EXPECTED_LONG_TERM_TTL),
+                Arguments.of(
+                    WalletTestUtils.cardWalletDocument("DELETED"),
+                    LONG_TERM_RETENTION_YEARS,
+                    "Wallet in DELETED state"
+                ),
                 Arguments.of(
                     WalletTestUtils.cardWalletDocument("REPLACED"),
-                    EXPECTED_LONG_TERM_TTL
+                    LONG_TERM_RETENTION_YEARS,
+                    "Wallet in REPLACED state"
                 ),
                 Arguments.of(
                     WalletTestUtils.cardWalletDocument("CREATED")
                         .copy(validationOperationResult = "EXECUTED"),
-                    EXPECTED_LONG_TERM_TTL
+                    LONG_TERM_RETENTION_YEARS,
+                    "Wallet in CREATED state with validationOperationResult in EXECUTED"
                 ),
-                // Case: ERROR -> 90 days
-                Arguments.of(WalletTestUtils.cardWalletDocument("ERROR"), EXPECTED_SHORT_TERM_TTL),
-                // Case: Already expired -> Instant Delete
+                Arguments.of(
+                    WalletTestUtils.cardWalletDocument("ERROR"),
+                    SHORT_TERM_RETENTION_DAYS,
+                    "Wallet in ERROR state"
+                ),
                 Arguments.of(
                     WalletTestUtils.cardWalletDocument("ERROR")
-                        .copy(updateDate = Instant.now().minus(36500, ChronoUnit.DAYS)),
-                    INSTANT_DELETE_TTL_SECONDS
+                        .copy(updateDate = Instant.now().minus(3760, ChronoUnit.DAYS)),
+                    INSTANT_DELETE_TTL_SECONDS,
+                    "Wallet with updateDate too old"
                 ),
+                Arguments.of(
+                    WalletTestUtils.cardWalletDocument("UNHANDLED"),
+                    -1,
+                    "Wallet in UNHANDLED state"
+                )
             )
     }
 
@@ -107,16 +117,55 @@ class LifecycleManagementServiceTest {
             verify(walletBulkRepository).bulkUpdateTtl(capture())
             val actualTtl = firstValue.values.first()
 
-            // Calculate the difference beetween what we have and what we expect
-            val diff = Math.abs(actualTtl - expectedTtl)
-
-            // Let define a tollerance of 3 days for cover leap year
-            val gapDaysInSeconds = 3 * 24 * 3600
-
-            assertTrue(
-                diff <= gapDaysInSeconds,
-                "The TTL calculated ($actualTtl) is to distant from the expected ($expectedTtl). Diff: $diff seconds "
-            )
+            if (
+                wallet.updateDate
+                    .atZone(ZoneOffset.UTC)
+                    .isBefore(
+                        Instant.now()
+                            .atZone(ZoneOffset.UTC)
+                            .minusYears(LONG_TERM_RETENTION_YEARS.toLong())
+                    )
+            ) {
+                assertTrue(
+                    actualTtl == expectedTtl,
+                    "The TTL calculated ($actualTtl) is to distant from the expected ($expectedTtl) in case of unhandled case."
+                )
+            } else if (
+                wallet.status in lifecycleManagementService.longTermAllowedStatuses ||
+                    wallet.validationOperationResult in
+                        lifecycleManagementService.npgValidOperationResult
+            ) {
+                val deleteInstant =
+                    wallet.updateDate.atZone(ZoneOffset.UTC).plusYears(expectedTtl.toLong())
+                val processDeleteInstant =
+                    Instant.now().atZone(ZoneOffset.UTC).plusSeconds(actualTtl.toLong())
+                assertTrue(
+                    deleteInstant.year == processDeleteInstant.year &&
+                        deleteInstant.month == processDeleteInstant.month &&
+                        deleteInstant.dayOfWeek == processDeleteInstant.dayOfWeek &&
+                        deleteInstant.hour == processDeleteInstant.hour &&
+                        deleteInstant.minute == processDeleteInstant.minute,
+                    "The TTL calculated ($actualTtl) is to distant from the expected ($expectedTtl) in case of longTermAllowedStatuses."
+                )
+            } else if (wallet.status in lifecycleManagementService.shortTermAllowedStatuses) {
+                val deleteInstant =
+                    wallet.updateDate.atZone(ZoneOffset.UTC).plusDays(expectedTtl.toLong())
+                val processDeleteInstant =
+                    Instant.now().atZone(ZoneOffset.UTC).plusSeconds(actualTtl.toLong())
+                assertTrue(
+                    deleteInstant.year == processDeleteInstant.year &&
+                        deleteInstant.month == processDeleteInstant.month &&
+                        deleteInstant.dayOfWeek == processDeleteInstant.dayOfWeek &&
+                        deleteInstant.hour == processDeleteInstant.hour &&
+                        deleteInstant.minute == processDeleteInstant.minute,
+                    "The TTL calculated ($deleteInstant) is to distant from the expected ($processDeleteInstant) in case of shortTermAllowedStatuses."
+                )
+            } else {
+                assertTrue(
+                    actualTtl == expectedTtl,
+                    "The TTL calculated ($actualTtl) is to distant from the expected ($expectedTtl) in case of unhandled case."
+                )
+            }
         }
     }
 
