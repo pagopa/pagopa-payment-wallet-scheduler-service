@@ -23,7 +23,7 @@ microservice-chart:
       PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2000-01-02T00:00:00Z"
       SCHEDULER_CDC_QUEUE_NAME: pagopa-u-itn-pay-wallet-cdc-queue-b
       SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks-beta"
-    envSecret: {}
+    envSecret: { }
   image:
     repository: pagopauitncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
     tag: "0.10.0"
@@ -57,9 +57,9 @@ microservice-chart:
     servicePort: 8080
   serviceAccount:
     create: false
-    annotations: {}
+    annotations: { }
     name: "pay-wallet-workload-identity"
-  podAnnotations: {}
+  podAnnotations: { }
   podSecurityContext:
     seccompProfile:
       type: RuntimeDefault
@@ -131,6 +131,17 @@ microservice-chart:
     PAYMENT_WALLET_JOB_EXECUTION_CRON: "*/10 * * * * *"
     PAYMENT_WALLET_JOB_EXECUTION_START_DATE: "1970-01-01T00:00:00Z"
     PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2009-01-01T00:00:00Z" #TODO to be set with the CDC activation date
+    LIFECYCLE_MANAGEMENT_JOB_EXECUTION_CRON: "0 */30 * * * *"
+    LIFECYCLE_MANAGEMENT_JOB_EXECUTION_DAYS_THRESHOLD: "90"
+    LIFECYCLE_MANAGEMENT_JOB_QUERY_EXCLUDED_STATUSES: "VALIDATED"
+    LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_LOW_RATE: "1"
+    LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_HIGH_RATE: "5"
+    LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_RAMP_UP_DURATION_SECONDS: "7200"
+    LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_START_WINDOW: "20:00"
+    LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_BURST_END_WINDOW: "23:00"
+    LIFECYCLE_MANAGEMENT_JOB_TTL_SHORT_TERM_RETENTION_DAYS: "90"
+    LIFECYCLE_MANAGEMENT_JOB_TTL_LONG_TERM_RETENTION_YEARS: "10"
+    LIFECYCLE_MANAGEMENT_JOB_TTL_INSTANT_DELETE_TTL_SECONDS: "5"
   envSecret:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     MONGO_PASSWORD: mongo-wallet-password
@@ -139,7 +150,7 @@ microservice-chart:
   keyvault:
     name: "pagopa-u-pay-wallet-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
-  nodeSelector: {}
+  nodeSelector: { }
   tolerations:
     - effect: "NoSchedule"
       key: "paymentWalletOnly"
@@ -161,7 +172,7 @@ microservice-chart:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/instance: pagopapaymentwalletschedulerservice
-            namespaces: ["pay-wallet"]
+            namespaces: [ "pay-wallet" ]
             topologyKey: topology.kubernetes.io/zone
   azure:
     workloadIdentityClientId: 928bc159-85e9-4f09-ba08-1e71851166f1

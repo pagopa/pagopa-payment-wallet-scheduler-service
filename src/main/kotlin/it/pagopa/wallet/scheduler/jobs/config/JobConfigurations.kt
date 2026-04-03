@@ -11,3 +11,6 @@ sealed class JobConfiguration
 /** Payment wallet job configuration */
 data class OnboardedPaymentWalletJobConfiguration(val startDate: Instant, val endDate: Instant) :
     JobConfiguration()
+
+/** Lifecycle management job configuration */
+data class LifecycleManagementJobConfiguration(val endDate: Instant) : JobConfiguration()

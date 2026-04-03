@@ -20,4 +20,15 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
         status: String,
         limit: Int
     ): Flux<Wallet>
+
+    @Aggregation(
+        "{\$match: { 'ttl': null, 'status': {'\$nin':?0}, 'updateDate': {'\$lte': '?1'} }}",
+        "{\$sort: {'updateDate': 1}}",
+        "{\$limit: ?2}",
+    )
+    fun findByTtlNullAndStatusNotInAndUpdateDateBefore(
+        excludedStatuses: List<String>,
+        endDate: String,
+        limit: Int
+    ): Flux<Wallet>
 }
