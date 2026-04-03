@@ -23,10 +23,10 @@ microservice-chart:
       PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2000-01-02T00:00:00Z"
       SCHEDULER_CDC_QUEUE_NAME: pagopa-u-itn-pay-wallet-cdc-queue-b
       SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks-beta"
-    envSecret: { }
+    envSecret: {}
   image:
     repository: pagopauitncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
-    tag: "0.10.0"
+    tag: "0.11.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -57,9 +57,9 @@ microservice-chart:
     servicePort: 8080
   serviceAccount:
     create: false
-    annotations: { }
+    annotations: {}
     name: "pay-wallet-workload-identity"
-  podAnnotations: { }
+  podAnnotations: {}
   podSecurityContext:
     seccompProfile:
       type: RuntimeDefault
@@ -150,7 +150,7 @@ microservice-chart:
   keyvault:
     name: "pagopa-u-pay-wallet-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
-  nodeSelector: { }
+  nodeSelector: {}
   tolerations:
     - effect: "NoSchedule"
       key: "paymentWalletOnly"
@@ -172,7 +172,7 @@ microservice-chart:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/instance: pagopapaymentwalletschedulerservice
-            namespaces: [ "pay-wallet" ]
+            namespaces: ["pay-wallet"]
             topologyKey: topology.kubernetes.io/zone
   azure:
     workloadIdentityClientId: 928bc159-85e9-4f09-ba08-1e71851166f1
