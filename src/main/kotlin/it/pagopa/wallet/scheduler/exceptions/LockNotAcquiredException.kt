@@ -1,4 +1,8 @@
 package it.pagopa.wallet.scheduler.exceptions
 
-class LockNotAcquiredException(lockName: String, throwable: Throwable? = null) :
-    LockException("Could not acquire the lock [${lockName}]", throwable)
+import it.pagopa.wallet.documents.wallets.ExclusiveLockDocument
+
+class LockNotAcquiredException(jobName: String, exclusiveLockDocument: ExclusiveLockDocument) :
+    RuntimeException(
+        "Lock not acquired for job with name: [$jobName] and locking key: [${exclusiveLockDocument.id}]"
+    )

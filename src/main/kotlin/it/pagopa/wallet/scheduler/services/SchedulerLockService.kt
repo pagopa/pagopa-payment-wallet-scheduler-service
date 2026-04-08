@@ -1,90 +1,63 @@
-package it.pagopa.wallet.scheduler.service
+package it.pagopa.wallet.scheduler.services
 
-import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
+import it.pagopa.wallet.documents.wallets.ExclusiveLockDocument
 import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
-import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
-import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
-import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
-import java.util.concurrent.TimeUnit
-import org.redisson.api.RedissonReactiveClient
+import it.pagopa.wallet.scheduler.repositories.ReactiveExclusiveLockDocumentWrapper
+import java.time.Duration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 
 @Service
 class SchedulerLockService(
-    @Autowired private val redissonClient: RedissonReactiveClient,
-    @Autowired private val redisJobLockPolicyConfig: RedisJobLockPolicyConfig
+    private val reactiveExclusiveLockDocumentWrapper: ReactiveExclusiveLockDocumentWrapper
 ) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun acquireJobLock(jobName: String): Mono<Unit> {
-        logger.info("Trying to acquire lock for job: {}", jobName)
-        return redissonClient
-            .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
-            .tryLock(
-                redisJobLockPolicyConfig.waitTimeMs,
-                redisJobLockPolicyConfig.ttlMs,
-                TimeUnit.MILLISECONDS
-            )
-            .filter { it == true } // only lock acquired
-            .doOnNext { logger.info("Lock acquired for job: {}", jobName) }
-            .onErrorMap {
-                logger.error("Lock acquiring error for job: {}", jobName, it)
-                LockNotAcquiredException(jobName, it)
-            }
-            .switchIfEmpty(Mono.error(LockNotAcquiredException(jobName)))
-            .thenReturn(Unit)
+    companion object {
+        const val OWNER = "wallet-scheduler-service"
     }
 
-    fun releaseJobLock(jobName: String): Mono<Unit> {
-        logger.info("Trying to release lock for job: {}", jobName)
-        return redissonClient
-            .getLock(redisJobLockPolicyConfig.getLockNameByJob(jobName))
-            .unlock()
-            .doOnSuccess { logger.info("Lock released for job: {}", jobName) }
-            .onErrorMap {
-                logger.error("Lock releasing error for job: {}", jobName, it)
-                LockNotReleasedException(jobName, it)
+    /**
+     * Acquire exclusive lock for a job. Returns the lock document if successful, throws exception
+     * if lock cannot be acquired
+     *
+     * @param jobName the name of the job to lock
+     * @param ttl the time-to-live duration for the lock
+     * @return Mono with the ExclusiveLockDocument if lock acquired successfully
+     * @throws LockNotAcquiredException if lock cannot be acquired
+     */
+    fun acquireJobLock(jobName: String, ttl: Duration): Mono<ExclusiveLockDocument> {
+        val lockDocument = ExclusiveLockDocument(jobName, OWNER)
+        logger.info("Trying to acquire lock for job: {} with TTL: {}", jobName, ttl)
+        return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument, ttl).flatMap {
+            lockAcquired ->
+            if (lockAcquired) {
+                logger.info("Lock acquired for job: {}", jobName)
+                Mono.just(lockDocument)
+            } else {
+                logger.warn("Lock not acquired for job: {}, another instance is running", jobName)
+                Mono.error(LockNotAcquiredException(jobName, lockDocument))
             }
-            .thenReturn(Unit)
+        }
     }
 
-    fun acquireJobSemaphore(jobName: String): Mono<String> {
-        logger.info("Trying to acquire semaphore for job: {}", jobName)
-        val semaphore =
-            redissonClient.getPermitExpirableSemaphore(
-                redisJobLockPolicyConfig.getSemNameByJob(jobName)
-            )
-        return semaphore
-            .trySetPermits(1)
-            .flatMap {
-                semaphore.tryAcquire(
-                    redisJobLockPolicyConfig.waitTimeMs,
-                    redisJobLockPolicyConfig.ttlMs,
-                    TimeUnit.MILLISECONDS
-                )
+    /**
+     * Release exclusive lock for a job
+     *
+     * @param lockDocument the lock document to release
+     * @return Mono<Boolean> indicating if the lock was released successfully
+     */
+    fun releaseJobLock(lockDocument: ExclusiveLockDocument): Mono<Boolean> {
+        logger.info("Releasing lock for job: {}", lockDocument.id)
+        return reactiveExclusiveLockDocumentWrapper
+            .deleteById(lockDocument.id)
+            .doOnNext { deleted ->
+                logger.info("Lock with id: [{}], deleted: [{}]", lockDocument.id, deleted)
             }
-            .doOnNext { logger.info("Semaphore [{}] acquired for job: {}", it, jobName) }
-            .onErrorMap {
-                logger.error("Semaphore acquiring error for job: {}", jobName, it)
-                SemNotAcquiredException(jobName, it)
+            .doOnError { error ->
+                logger.error("Error releasing lock with id: [{}]", lockDocument.id, error)
             }
-            .switchIfEmpty(Mono.error(SemNotAcquiredException(jobName)))
-    }
-
-    fun releaseJobSemaphore(jobName: String, semaphoreId: String): Mono<Unit> {
-        logger.info("Trying to release semaphore for job: {}", jobName)
-        return redissonClient
-            .getPermitExpirableSemaphore(redisJobLockPolicyConfig.getSemNameByJob(jobName))
-            .release(semaphoreId)
-            .doOnSuccess { logger.info("Semaphore released for job: {}", jobName) }
-            .onErrorMap {
-                logger.error("Semaphore releasing error for job: {}", jobName, it)
-                SemNotReleasedException(jobName, it)
-            }
-            .thenReturn(Unit)
     }
 }
