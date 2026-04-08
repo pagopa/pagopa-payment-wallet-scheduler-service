@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono
 abstract class ReactiveRedisTemplateWrapper<V>(
     val reactiveRedisTemplate: ReactiveRedisTemplate<String, V>,
     private val keyspace: String,
-    private val ttl: Duration
 ) {
     /**
      * Save key to hold the string value if key is absent (SET with NX).
@@ -25,7 +24,7 @@ abstract class ReactiveRedisTemplateWrapper<V>(
     fun saveIfAbsent(value: V, customTtl: Duration): Mono<Boolean> {
         return reactiveRedisTemplate
             .opsForValue()
-            .setIfAbsent("$keyspace:${getKeyFromEntity(value)}", value!!, customTtl)
+            .setIfAbsent(compoundKeyWithKeyspace(getKeyFromEntity(value)), value!!, customTtl)
     }
 
     /**

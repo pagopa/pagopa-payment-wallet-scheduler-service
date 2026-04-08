@@ -29,8 +29,7 @@ class RedisConfig(private val redisJobLockPolicyConfig: RedisJobLockPolicyConfig
             }
 
         val keySerializer = StringRedisSerializer()
-        val valueSerializer =
-            Jackson2JsonRedisSerializer(objectMapper, Instant::class.java)
+        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, Instant::class.java)
 
         val serializationContext =
             RedisSerializationContext.newSerializationContext<String, Instant>(keySerializer)
