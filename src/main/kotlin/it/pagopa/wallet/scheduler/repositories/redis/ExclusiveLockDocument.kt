@@ -1,4 +1,4 @@
-package it.pagopa.wallet.documents.wallets
+package it.pagopa.wallet.scheduler.repositories.redis
 
 import java.time.OffsetDateTime
 import org.springframework.data.annotation.Id

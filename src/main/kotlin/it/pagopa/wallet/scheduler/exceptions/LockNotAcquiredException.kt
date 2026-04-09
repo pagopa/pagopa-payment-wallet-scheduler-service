@@ -1,6 +1,6 @@
 package it.pagopa.wallet.scheduler.exceptions
 
-import it.pagopa.wallet.documents.wallets.ExclusiveLockDocument
+import it.pagopa.wallet.scheduler.repositories.redis.ExclusiveLockDocument
 
 class LockNotAcquiredException(jobName: String, exclusiveLockDocument: ExclusiveLockDocument) :
     RuntimeException(

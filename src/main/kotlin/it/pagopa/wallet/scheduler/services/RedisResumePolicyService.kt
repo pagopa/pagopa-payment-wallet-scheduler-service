@@ -1,31 +1,35 @@
 package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
+import it.pagopa.wallet.scheduler.repositories.ReactiveResumeTimestampWrapper
+import it.pagopa.wallet.scheduler.repositories.redis.ResumeTimestamp
 import java.time.Duration
 import java.time.Instant
-import java.util.*
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Service
 class RedisResumePolicyService(
-    @Autowired private val redisTemplate: TimestampRedisTemplate,
-    @Autowired private val redisResumePolicyConfig: RedisResumePolicyConfig
+    private val reactiveResumeTimestampWrapper: ReactiveResumeTimestampWrapper,
+    private val redisResumePolicyConfig: RedisResumePolicyConfig
 ) : ResumePolicyService {
     private val logger = LoggerFactory.getLogger(RedisResumePolicyService::class.java)
 
     override fun getResumeTimestamp(target: String): Mono<Instant> {
-        return redisTemplate.findByKeyspaceAndTarget(redisResumePolicyConfig.keyspace, target)
+        return reactiveResumeTimestampWrapper
+            .findById(target)
+            .map {
+                it.timestamp
+            }
     }
 
     override fun saveResumeTimestamp(target: String, timestamp: Instant): Mono<Boolean> {
-        logger.debug("Saving instant: {}", timestamp.toString())
-        return redisTemplate.save(
-            redisResumePolicyConfig.keyspace,
-            target,
-            timestamp,
+        logger.info("Saving instant: {} with target: {}", timestamp.toString(), target)
+        val resumeTimestamp = ResumeTimestamp(target, timestamp)
+        return reactiveResumeTimestampWrapper.save(
+            resumeTimestamp,
             Duration.ofMinutes(redisResumePolicyConfig.ttlInMin)
         )
     }
