@@ -8,7 +8,6 @@ import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Service
 class RedisResumePolicyService(
@@ -18,11 +17,7 @@ class RedisResumePolicyService(
     private val logger = LoggerFactory.getLogger(RedisResumePolicyService::class.java)
 
     override fun getResumeTimestamp(target: String): Mono<Instant> {
-        return reactiveResumeTimestampWrapper
-            .findById(target)
-            .map {
-                it.timestamp
-            }
+        return reactiveResumeTimestampWrapper.findById(target).map { it.timestamp }
     }
 
     override fun saveResumeTimestamp(target: String, timestamp: Instant): Mono<Boolean> {

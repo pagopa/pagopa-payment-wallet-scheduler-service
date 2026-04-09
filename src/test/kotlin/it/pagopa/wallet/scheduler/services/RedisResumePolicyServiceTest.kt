@@ -1,9 +1,10 @@
 package it.pagopa.wallet.services
 
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
+import it.pagopa.wallet.scheduler.repositories.ReactiveResumeTimestampWrapper
+import it.pagopa.wallet.scheduler.repositories.redis.ResumeTimestamp
 import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.ResumePolicyService
-import it.pagopa.wallet.scheduler.services.TimestampRedisTemplate
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -17,21 +18,23 @@ import reactor.test.StepVerifier
 @ExtendWith(MockitoExtension::class)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class RedisResumePolicyServiceTest {
-    private val redisTemplate: TimestampRedisTemplate = mock()
+    private val reactiveResumeTimestampWrapper: ReactiveResumeTimestampWrapper = mock()
     private val redisResumePolicyConfig: RedisResumePolicyConfig = mock()
     private lateinit var redisResumePolicyService: ResumePolicyService
 
     @BeforeEach
     fun initEventStream() {
-        redisResumePolicyService = RedisResumePolicyService(redisTemplate, redisResumePolicyConfig)
+        redisResumePolicyService =
+            RedisResumePolicyService(reactiveResumeTimestampWrapper, redisResumePolicyConfig)
     }
 
     @Test
     fun `redis resume policy will get resume timestamp in case of cache hit`() {
         val expected = Instant.now()
+        val resumeTimestamp = ResumeTimestamp("target_test", expected)
 
-        whenever(redisTemplate.findByKeyspaceAndTarget(anyOrNull(), eq("target_test")))
-            .thenReturn(Mono.just(expected))
+        whenever(reactiveResumeTimestampWrapper.findById(anyOrNull()))
+            .thenReturn(Mono.just(resumeTimestamp))
 
         StepVerifier.create(redisResumePolicyService.getResumeTimestamp("target_test"))
             .expectNext(expected)
@@ -41,11 +44,11 @@ class RedisResumePolicyServiceTest {
     @Test
     fun `redis resume policy will save resume timestamp`() {
         val expected: Instant = Instant.now()
-        given(redisTemplate.save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+        given(reactiveResumeTimestampWrapper.save(anyOrNull(), anyOrNull()))
             .willReturn(Mono.just(true))
 
         redisResumePolicyService.saveResumeTimestamp("target_test", expected)
 
-        verify(redisTemplate, times(1)).save(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        verify(reactiveResumeTimestampWrapper, times(1)).save(anyOrNull(), anyOrNull())
     }
 }

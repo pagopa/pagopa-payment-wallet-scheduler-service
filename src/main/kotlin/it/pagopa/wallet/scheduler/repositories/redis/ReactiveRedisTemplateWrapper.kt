@@ -1,9 +1,7 @@
 package it.pagopa.wallet.scheduler.repositories.redis
 
-import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import java.time.Duration
 import java.util.function.Function
-import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.ReactiveRedisTemplate
 import reactor.core.publisher.Mono
 
