@@ -75,7 +75,7 @@ db.getCollection('payment-wallets').insertMany([
     },
     /* STATE in REPLACED, DELETED, validationOperationResult == EXECUTED */
     {
-            "_id": "00a06383-1495-4b90-88f6-80c5fecf554a",
+            "_id": "10a06383-1495-4b90-88f6-80c5fecf554a",
             "userId": "928bbaed-f7c2-41f9-b47c-9bce088322d6",
             "status": "DELETED",
             "paymentMethodId": "148ff003-46a6-4790-9376-b0e057352e45",
@@ -112,44 +112,44 @@ db.getCollection('payment-wallets').insertMany([
             "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
     {
-            "_id": "00a06383-1495-4b90-88f6-80c5fecf554a",
-            "userId": "928bbaed-f7c2-41f9-b47c-9bce088322d6",
-            "status": "REPLACED"
-            "paymentMethodId": "148ff003-46a6-4790-9376-b0e057352e45",
-            "contractId": "W171896465077471gI",
-            "applications": [
-                {
-                    "_id": "PAGOPA",
-                    "status": "ENABLED",
-                    "creationDate": "2024-06-21T10:10:50.749146096Z",
-                    "updateDate": "2024-06-21T10:10:50.749146096Z",
-                    "metadata": {
-                        "onboardByMigration": "2024-06-21T10:10:50.749146096Z"
+                "_id": "10a77777-1495-4b90-88f6-80c5fecf554a",
+                "userId": "928bbaed-f7c2-41f9-b47c-9bce088322d6",
+                "status": "REPLACED",
+                "paymentMethodId": "148ff003-46a6-4790-9376-b0e057352e45",
+                "contractId": "W171896465077471gI",
+                "applications": [
+                    {
+                        "_id": "PAGOPA",
+                        "status": "ENABLED",
+                        "creationDate": "2024-06-21T10:10:50.749146096Z",
+                        "updateDate": "2024-06-21T10:10:50.749146096Z",
+                        "metadata": {
+                            "onboardByMigration": "2024-06-21T10:10:50.749146096Z"
+                        }
                     }
-                }
-            ],
-            "details": {
-                "type": "CARDS",
-                "bin": "223059",
-                "lastFourDigits": "4353",
-                "expiryDate": "203204",
-                "brand": "MASTERCARD",
-                "paymentInstrumentGatewayId": "41795763745a7246744943674e6265776e6a50674c375555754447687534386b4a7574706a5975307030593d",
-                "_class": "it.pagopa.wallet.documents.wallets.details.CardDetails"
-            },
-            "clients": {
-                "IO": {
-                    "status": "ENABLED"
-                }
-            },
-            "version": 2,
-            "creationDate": "2024-10-24T07:50:49.995798539Z",
-            "updateDate": "2024-06-21T10:34:18.850935581Z",
-            "onboardingChannel": "IO",
-            "_class": "it.pagopa.wallet.documents.wallets.Wallet"
-    },
+                ],
+                "details": {
+                    "type": "CARDS",
+                    "bin": "223059",
+                    "lastFourDigits": "4353",
+                    "expiryDate": "203204",
+                    "brand": "MASTERCARD",
+                    "paymentInstrumentGatewayId": "41795763745a7246744943674e6265776e6a50674c375555754447687534386b4a7574706a5975307030593d",
+                    "_class": "it.pagopa.wallet.documents.wallets.details.CardDetails"
+                },
+                "clients": {
+                    "IO": {
+                        "status": "ENABLED"
+                    }
+                },
+                "version": 2,
+                "creationDate": "2024-10-24T07:50:49.995798539Z",
+                "updateDate": "2024-06-21T10:34:18.850935581Z",
+                "onboardingChannel": "IO",
+                "_class": "it.pagopa.wallet.documents.wallets.Wallet"
+        },
     {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+        "_id": "a1a27446-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "CREATED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
@@ -182,8 +182,8 @@ db.getCollection('payment-wallets').insertMany([
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
     /* STATE in {"CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR"} */
-    {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+   {
+        "_id": "a0a27666-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "CREATED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
@@ -216,7 +216,7 @@ db.getCollection('payment-wallets').insertMany([
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
     {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+        "_id": "a0a27456-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "INITIALIZED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
@@ -249,7 +249,7 @@ db.getCollection('payment-wallets').insertMany([
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
     {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+        "_id": "a0a27436-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "VALIDATION_REQUESTED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
@@ -282,7 +282,7 @@ db.getCollection('payment-wallets').insertMany([
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
     {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+        "_id": "a0a27426-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "ERROR",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
@@ -316,7 +316,7 @@ db.getCollection('payment-wallets').insertMany([
     },
     /* update timestamp too old and STATE in {"CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR", REPLACED, DELETED STATE, validationOperationResult == EXECUTED} */
     {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+        "_id": "a0a27416-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "CREATED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
@@ -350,7 +350,7 @@ db.getCollection('payment-wallets').insertMany([
     },
     /* UNHANDLED STATUS */
     {
-        "_id": "a0a27446-e6d8-47d2-8786-ca393f19c30b",
+        "_id": "a0a27406-e6d8-47d2-8786-ca393f19c30b",
         "userId": "6fd46190-f4bf-4a9f-9e70-fb98f235a449",
         "status": "UNHANDLED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
