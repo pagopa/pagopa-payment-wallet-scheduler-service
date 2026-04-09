@@ -1,6 +1,10 @@
 //connect to Mongo DB
 conn = new Mongo();
 db = conn.getDB("payment-wallet");
+let validDate = new Date();
+// The service will find only wallet older than 90 days to apply ttl
+validDate.setUTCDate(validDate.getUTCDate() - 90);
+let validDateString = validDate.toISOString();
 //create and populate payment wallets collection
 db.getCollection('payment-wallets').insertMany([
     {
@@ -106,8 +110,8 @@ db.getCollection('payment-wallets').insertMany([
                 }
             },
             "version": 2,
-            "creationDate": "2024-10-24T07:50:49.995798539Z",
-            "updateDate": "2024-06-21T10:34:18.850935581Z",
+            "creationDate": validDateString,
+            "updateDate": validDateString,
             "onboardingChannel": "IO",
             "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
@@ -121,8 +125,8 @@ db.getCollection('payment-wallets').insertMany([
                     {
                         "_id": "PAGOPA",
                         "status": "ENABLED",
-                        "creationDate": "2024-06-21T10:10:50.749146096Z",
-                        "updateDate": "2024-06-21T10:10:50.749146096Z",
+                        "creationDate": validDateString,
+                        "updateDate": validDateString,
                         "metadata": {
                             "onboardByMigration": "2024-06-21T10:10:50.749146096Z"
                         }
@@ -143,8 +147,8 @@ db.getCollection('payment-wallets').insertMany([
                     }
                 },
                 "version": 2,
-                "creationDate": "2024-10-24T07:50:49.995798539Z",
-                "updateDate": "2024-06-21T10:34:18.850935581Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "onboardingChannel": "IO",
                 "_class": "it.pagopa.wallet.documents.wallets.Wallet"
         },
@@ -159,8 +163,8 @@ db.getCollection('payment-wallets').insertMany([
             {
                 "_id": "PAGOPA",
                 "status": "ENABLED",
-                "creationDate": "2024-10-24T09:50:49.292579182Z",
-                "updateDate": "2024-10-24T09:50:49.292579682Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "metadata": {}
             }
         ],
@@ -176,8 +180,8 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 3,
-        "creationDate": "2024-10-24T09:50:49.995798539Z",
-        "updateDate": "2024-10-24T09:51:22.226817657Z",
+        "creationDate": validDateString,
+        "updateDate": validDateString,
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
@@ -188,13 +192,12 @@ db.getCollection('payment-wallets').insertMany([
         "status": "CREATED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
         "contractId": "W1729763462700lj43",
-        "validationOperationResult": "EXECUTED",
         "applications": [
             {
                 "_id": "PAGOPA",
                 "status": "ENABLED",
-                "creationDate": "2024-10-24T09:50:49.292579182Z",
-                "updateDate": "2024-10-24T09:50:49.292579682Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "metadata": {}
             }
         ],
@@ -210,8 +213,8 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 3,
-        "creationDate": "2024-10-24T09:50:49.995798539Z",
-        "updateDate": "2024-10-24T09:51:22.226817657Z",
+        "creationDate": validDateString,
+        "updateDate": validDateString,
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
@@ -221,13 +224,12 @@ db.getCollection('payment-wallets').insertMany([
         "status": "INITIALIZED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
         "contractId": "W1729763462700lj43",
-        "validationOperationResult": "EXECUTED",
         "applications": [
             {
                 "_id": "PAGOPA",
                 "status": "ENABLED",
-                "creationDate": "2024-10-24T09:50:49.292579182Z",
-                "updateDate": "2024-10-24T09:50:49.292579682Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "metadata": {}
             }
         ],
@@ -243,8 +245,8 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 3,
-        "creationDate": "2024-10-24T09:50:49.995798539Z",
-        "updateDate": "2024-10-24T09:51:22.226817657Z",
+        "creationDate": validDateString,
+        "updateDate": validDateString,
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
@@ -254,13 +256,13 @@ db.getCollection('payment-wallets').insertMany([
         "status": "VALIDATION_REQUESTED",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
         "contractId": "W1729763462700lj43",
-        "validationOperationResult": "EXECUTED",
+        "validationOperationResult": "DELETED",
         "applications": [
             {
                 "_id": "PAGOPA",
                 "status": "ENABLED",
-                "creationDate": "2024-10-24T09:50:49.292579182Z",
-                "updateDate": "2024-10-24T09:50:49.292579682Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "metadata": {}
             }
         ],
@@ -276,8 +278,8 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 3,
-        "creationDate": "2024-10-24T09:50:49.995798539Z",
-        "updateDate": "2024-10-24T09:51:22.226817657Z",
+        "creationDate": validDateString,
+        "updateDate": validDateString,
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
@@ -287,13 +289,13 @@ db.getCollection('payment-wallets').insertMany([
         "status": "ERROR",
         "paymentMethodId": "9d735400-9450-4f7e-9431-8c1e7fa2a339",
         "contractId": "W1729763462700lj43",
-        "validationOperationResult": "EXECUTED",
+        "validationOperationResult": "DELETED",
         "applications": [
             {
                 "_id": "PAGOPA",
                 "status": "ENABLED",
-                "creationDate": "2024-10-24T09:50:49.292579182Z",
-                "updateDate": "2024-10-24T09:50:49.292579682Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "metadata": {}
             }
         ],
@@ -309,8 +311,8 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 3,
-        "creationDate": "2024-10-24T09:50:49.995798539Z",
-        "updateDate": "2024-10-24T09:51:22.226817657Z",
+        "creationDate": validDateString,
+        "updateDate": validDateString,
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     },
@@ -359,8 +361,8 @@ db.getCollection('payment-wallets').insertMany([
             {
                 "_id": "PAGOPA",
                 "status": "ENABLED",
-                "creationDate": "2024-10-24T09:50:49.292579182Z",
-                "updateDate": "2024-10-24T09:50:49.292579682Z",
+                "creationDate": validDateString,
+                "updateDate": validDateString,
                 "metadata": {}
             }
         ],
@@ -376,8 +378,8 @@ db.getCollection('payment-wallets').insertMany([
             }
         },
         "version": 3,
-        "creationDate": "2024-10-24T09:50:49.995798539Z",
-        "updateDate": "2024-10-24T09:51:22.226817657Z",
+        "creationDate": validDateString,
+        "updateDate": validDateString,
         "onboardingChannel": "IO",
         "_class": "it.pagopa.wallet.documents.wallets.Wallet"
     }
