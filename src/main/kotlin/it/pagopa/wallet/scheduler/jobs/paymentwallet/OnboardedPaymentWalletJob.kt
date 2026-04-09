@@ -60,9 +60,7 @@ class OnboardedPaymentWalletJob(
 
                 redisResumePolicyService
                     .saveResumeTimestamp(id(), Instant.parse(lastTimestamp))
-                    .thenReturn(
-                        lastTimestamp
-                    )
+                    .thenReturn(lastTimestamp)
             }
             .doOnError {
                 logger.error(
