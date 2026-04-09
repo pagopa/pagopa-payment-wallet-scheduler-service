@@ -1,8 +1,8 @@
 package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
-import it.pagopa.wallet.scheduler.repositories.ReactiveExclusiveLockDocumentWrapper
 import it.pagopa.wallet.scheduler.repositories.redis.ExclusiveLockDocument
+import it.pagopa.wallet.scheduler.repositories.redis.ReactiveExclusiveLockDocumentWrapper
 import java.time.Duration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

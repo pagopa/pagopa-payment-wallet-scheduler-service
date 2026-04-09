@@ -1,7 +1,5 @@
-package it.pagopa.wallet.scheduler.repositories
+package it.pagopa.wallet.scheduler.repositories.redis
 
-import it.pagopa.wallet.scheduler.repositories.redis.ExclusiveLockDocument
-import it.pagopa.wallet.scheduler.repositories.redis.ReactiveRedisTemplateWrapper
 import org.springframework.data.redis.core.ReactiveRedisTemplate
 
 /** Redis template wrapper instance for handling exclusive lock */

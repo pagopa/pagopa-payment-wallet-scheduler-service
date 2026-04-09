@@ -1,7 +1,7 @@
 package it.pagopa.wallet.services
 
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
-import it.pagopa.wallet.scheduler.repositories.ReactiveResumeTimestampWrapper
+import it.pagopa.wallet.scheduler.repositories.redis.ReactiveResumeTimestampWrapper
 import it.pagopa.wallet.scheduler.repositories.redis.ResumeTimestamp
 import it.pagopa.wallet.scheduler.services.RedisResumePolicyService
 import it.pagopa.wallet.scheduler.services.ResumePolicyService

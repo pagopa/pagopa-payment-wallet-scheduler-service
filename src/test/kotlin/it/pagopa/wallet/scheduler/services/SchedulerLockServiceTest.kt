@@ -1,8 +1,8 @@
 package it.pagopa.wallet.scheduler.service
 
 import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
-import it.pagopa.wallet.scheduler.repositories.ReactiveExclusiveLockDocumentWrapper
 import it.pagopa.wallet.scheduler.repositories.redis.ExclusiveLockDocument
+import it.pagopa.wallet.scheduler.repositories.redis.ReactiveExclusiveLockDocumentWrapper
 import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import org.junit.jupiter.api.Test

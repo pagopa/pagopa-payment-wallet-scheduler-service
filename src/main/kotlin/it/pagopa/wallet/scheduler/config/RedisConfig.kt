@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
-import it.pagopa.wallet.scheduler.repositories.ReactiveExclusiveLockDocumentWrapper
-import it.pagopa.wallet.scheduler.repositories.ReactiveResumeTimestampWrapper
 import it.pagopa.wallet.scheduler.repositories.redis.ExclusiveLockDocument
+import it.pagopa.wallet.scheduler.repositories.redis.ReactiveExclusiveLockDocumentWrapper
+import it.pagopa.wallet.scheduler.repositories.redis.ReactiveResumeTimestampWrapper
 import it.pagopa.wallet.scheduler.repositories.redis.ResumeTimestamp
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
