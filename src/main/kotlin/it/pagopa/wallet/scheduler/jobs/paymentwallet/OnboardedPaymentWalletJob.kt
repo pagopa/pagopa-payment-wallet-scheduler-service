@@ -40,6 +40,7 @@ class OnboardedPaymentWalletJob(
         logger.info("Starting payment wallet processing in time window {} - {}", startDate, endDate)
         return redisResumePolicyService
             .getResumeTimestamp(id())
+            .doOnNext { logger.info("Retrieved: $it") }
             .subscribeOn(Schedulers.boundedElastic())
             .defaultIfEmpty(startDate)
             .flatMapMany { effectiveStartDate ->
@@ -55,14 +56,13 @@ class OnboardedPaymentWalletJob(
             .flatMap { cdcEventDispatcherService.dispatchEvent(it) }
             .collectSortedList(compareBy<LoggingEvent> { OffsetDateTime.parse(it.timestamp) })
             .flatMap {
-                Mono.fromCallable {
-                        redisResumePolicyService.saveResumeTimestamp(
-                            id(),
-                            Instant.parse(it.last().timestamp)
-                        )
-                    }
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .thenReturn(it.last().timestamp)
+                val lastTimestamp = it.last().timestamp
+
+                redisResumePolicyService
+                    .saveResumeTimestamp(id(), Instant.parse(lastTimestamp))
+                    .thenReturn(
+                        lastTimestamp
+                    )
             }
             .doOnError {
                 logger.error(

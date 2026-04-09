@@ -6,5 +6,5 @@ import org.springframework.lang.NonNull
 
 data class ResumeTimestamp(
     @param:NonNull @Id val id: String,
-    val timestamp: Instant,
+    val timestamp: Instant = Instant.EPOCH,
 )

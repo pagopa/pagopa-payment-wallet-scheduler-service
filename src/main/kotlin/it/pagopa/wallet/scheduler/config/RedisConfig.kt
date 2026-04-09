@@ -1,5 +1,7 @@
 package it.pagopa.wallet.scheduler.config
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
 import it.pagopa.wallet.scheduler.repositories.ReactiveExclusiveLockDocumentWrapper
@@ -24,9 +26,15 @@ class RedisConfig(
     fun resumeTimestampWrapper(
         reactiveRedisConnectionFactory: ReactiveRedisConnectionFactory
     ): ReactiveResumeTimestampWrapper {
+        val objectMapper =
+            jacksonObjectMapper().apply {
+                findAndRegisterModules()
+                disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            }
+
         // serializer
         val keySer = StringRedisSerializer()
-        val valueSer = Jackson2JsonRedisSerializer(ResumeTimestamp::class.java)
+        val valueSer = Jackson2JsonRedisSerializer(objectMapper, ResumeTimestamp::class.java)
 
         // serialization context
         val ctx =
