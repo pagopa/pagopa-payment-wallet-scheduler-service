@@ -1,6 +1,22 @@
 /*
     This script is intended to be executed in the mongosh of the mongo container during
     the integration test executed in the code-review-pipelines.
+    To test it in local use this bash script:
+
+    #!/bin/bash
+    #sleep 15
+    echo "Starting wallet lifecycle management integration testing..."
+
+    docker cp lifecycle-integration-test.js mongodb:/tmp/lifecycle-integration-test.js
+
+    # Executing the script and check the result
+    docker exec mongodb mongosh -u admin -p password --authenticationDatabase admin /tmp/lifecycle-integration-test.js
+
+    # Check of the exit code of the script
+    if [ $? -ne 0 ]; then
+      echo "Integration test of lifecycle management failed! Check the logs for more details ..."
+      exit 1
+    fi
 */
 console.log("Starting integration test...")
 const dbName = "payment-wallet";
@@ -8,9 +24,9 @@ db = db.getSiblingDB(dbName);
 const coll = db.getCollection("payment-wallets");
 const docs = coll.find().toArray();
 
-let longTermAllowedStatuses = ["DELETED", "REPLACED"]
-let shortTermAllowedStatuses = ["CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR"]
-let npgValidOperationResult = ["EXECUTED"]
+const longTermAllowedStatuses = ["DELETED", "REPLACED"]
+const shortTermAllowedStatuses = ["CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR"]
+const npgValidOperationResult = ["EXECUTED"]
 
 
 function assertTtl(doc) {
@@ -19,13 +35,13 @@ function assertTtl(doc) {
    const ttl = doc.ttl;
 
    // Check in which case the doc must be
-   const isLongTermStatus = status in longTermAllowedStatuses;
-   const isShortTermStatus = status in shortTermAllowedStatuses;
-   const isNpgValidOperationResult = doc.validationOperationResult in npgValidOperationResult;
+   const isLongTermStatus = longTermAllowedStatuses.includes(status);
+   const isShortTermStatus = shortTermAllowedStatuses.includes(status);
+   const isNpgValidOperationResult = npgValidOperationResult.includes(doc.validationOperationResult);
 
    // Not handled case, ttl == -1, null or undefined
-   if (!isLongTermStatus && !isShortTermStatus && !isNpgValidOperationResult) {
-        if(!ttl || ttl === null || ttl === -1){
+   if (!isLongTermStatus && !isShortTermStatus) {
+        if(!ttl || ttl === "undefined" || ttl === null || ttl === -1){
             return true;
         }
    }
@@ -37,27 +53,34 @@ function assertTtl(doc) {
    }
 
    // Calculate the expired date and expected expired date
+
+   // Calculate the date of expire starting from the current date plus the ttl, because the ttl is the seconds
+   // from the current date when the document will be deleted
+   const executionDate = new Date();
+   let expiredDate = new Date(executionDate);
+   expiredDate.setUTCSeconds(executionDate.getUTCSeconds() + ttl);
+
    let expectedExpiredDate = new Date(updateDate);
-   let expiredDate = new Date(updateDate);
-   expiredDate = expiredDate.setUTCSeconds(expiredDate.getUTCSeconds() + ttl);
-   print(`log: expectedExpiredDate ${expectedExpiredDate.toUTCString()}, expiredDate ${expiredDate.toString()}.`);
    let limitDate = new Date();
 
    if(isLongTermStatus || isNpgValidOperationResult){
         // Add 10 years
-        expectedExpiredDate.setFullYear(expiredDate.getFullYear() + 10);
+        expectedExpiredDate.setUTCFullYear(expectedExpiredDate.getUTCFullYear() + 10);
         limitDate.setFullYear(limitDate.getFullYear() - 10);
    }else if(isShortTermStatus){
         // Add 90 days
-        expectedExpiredDate.setUTCDate(expiredDate.getUTCDate() + 90);
+        expectedExpiredDate.setUTCDate(expectedExpiredDate.getUTCDate() + 90);
         limitDate.setUTCDate(limitDate.getUTCDate() - 90);
    }
 
-
-   // Check if the document updateDate is too old -> instantaneus delete 5 seconds
-   if(limitDate > expiredDate && ttl !== 5){
-        print(`ERROR: Doc ${doc._id} with updateDate < limiteDate: ${limitDate.toUTCString()}. TTL expected 5, ttl: ~${ttl} s`);
-        return false;
+   // Check if the document expectedExpiredDate is too old -> instantaneous delete 5 seconds
+   if(limitDate.getTime() > expectedExpiredDate.getTime()){
+        if(ttl === 5){
+            return true;
+        }else{
+            print(`ERROR: Doc ${doc._id} with updateDate < limiteDate: ${limitDate.toUTCString()}. TTL expected 5, ttl: ~${ttl} s`);
+            return false;
+        }
     }
 
     // Check if the expected date and the expired date are comparable
@@ -66,7 +89,6 @@ function assertTtl(doc) {
            expiredDate.getUTCDate()     === expectedExpiredDate.getUTCDate())
 
 }
-
 
 let hasError = false;
 
@@ -78,7 +100,6 @@ docs.forEach(doc => {
         hasError = true;
     };
 });
-
 
 if (hasError) {
    print("Integration test failed!");
