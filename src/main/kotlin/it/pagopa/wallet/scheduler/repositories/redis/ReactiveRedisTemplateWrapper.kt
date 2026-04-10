@@ -6,8 +6,8 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate
 import reactor.core.publisher.Mono
 
 /**
- * This class is a [org.springframework.data.redis.core.ReactiveRedisTemplate] wrapper class, used
- * to centralize commons ReactiveRedisTemplate operations
+ * This class is a [ReactiveRedisTemplate] wrapper class, used to centralize commons
+ * ReactiveRedisTemplate operations
  *
  * @param V the ReactiveRedisTemplate value type
  */
@@ -20,7 +20,7 @@ abstract class ReactiveRedisTemplateWrapper<V>(
      *
      * @param value the entity to be saved
      * @param ttl the TTL for the entity to be saved. This parameter overrides the default TTL value
-     * @return a [reactor.core.publisher.Mono] emitting `true` if the key was set, `false` otherwise
+     * @return a [Mono] emitting `true` if the key was set, `false` otherwise
      */
     fun save(value: V, ttl: Duration): Mono<Boolean> {
         return reactiveRedisTemplate
@@ -55,7 +55,7 @@ abstract class ReactiveRedisTemplateWrapper<V>(
      * @return a [Mono] emitting the value if present; empty if not found
      */
     fun findById(key: String): Mono<V> {
-        return reactiveRedisTemplate.opsForValue().get(compoundKeyWithKeyspace(key))
+        return reactiveRedisTemplate.opsForValue()[compoundKeyWithKeyspace(key)]
     }
 
     /**
@@ -71,7 +71,6 @@ abstract class ReactiveRedisTemplateWrapper<V>(
     }
 
     private fun compoundKeyWithKeyspace(key: String): String {
-
         return "$keyspace:$key"
     }
 }
