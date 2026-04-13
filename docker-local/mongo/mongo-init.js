@@ -3,7 +3,7 @@ conn = new Mongo();
 db = conn.getDB("payment-wallet");
 let validDate = new Date();
 // The service will find only wallet older than 90 days to apply ttl
-validDate.setUTCDate(validDate.getUTCDate() - 90);
+validDate.setUTCDate(validDate.getUTCDate() - 50);
 let validDateString = validDate.toISOString();
 //create and populate payment wallets collection
 db.getCollection('payment-wallets').insertMany([
