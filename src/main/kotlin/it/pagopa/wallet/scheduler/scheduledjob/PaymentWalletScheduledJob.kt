@@ -3,7 +3,7 @@ package it.pagopa.wallet.scheduler.scheduledjob
 import it.pagopa.wallet.scheduler.config.properties.PaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.jobs.config.OnboardedPaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.jobs.paymentwallet.OnboardedPaymentWalletJob
-import it.pagopa.wallet.scheduler.service.SchedulerLockService
+import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -16,17 +16,18 @@ import reactor.core.publisher.Mono
 class PaymentWalletScheduledJob(
     @Autowired private val onboardedPaymentWalletJob: OnboardedPaymentWalletJob,
     @Autowired private val paymentWalletJobConfiguration: PaymentWalletJobConfiguration,
-    @Autowired private val schedulerLockService: SchedulerLockService
+    @Autowired private val schedulerLockService: SchedulerLockService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(cron = "\${payment-wallet-job.execution.cron}")
     fun processOnboardedPaymentWallets() {
         val startTime = Instant.now()
+        val lockTtl = Duration.ofSeconds(paymentWalletJobConfiguration.lockTtlSeconds.toLong())
         schedulerLockService
-            .acquireJobSemaphore(jobName = onboardedPaymentWalletJob.id())
-            .doOnError { logger.error("Unable to start job without semaphore acquiring", it) }
-            .flatMap { semaphoreId ->
+            .acquireJobLock(onboardedPaymentWalletJob.id(), lockTtl)
+            .doOnError { logger.error("Unable to start job without acquiring lock", it) }
+            .flatMap { lockDocument ->
                 onboardedPaymentWalletJob
                     .process(
                         OnboardedPaymentWalletJobConfiguration(
@@ -48,14 +49,9 @@ class PaymentWalletScheduledJob(
                         )
                     }
                     .onErrorResume { Mono.empty() }
-                    .thenReturn(semaphoreId)
+                    .thenReturn(lockDocument)
             }
-            .flatMap {
-                schedulerLockService.releaseJobSemaphore(
-                    jobName = onboardedPaymentWalletJob.id(),
-                    semaphoreId = it
-                )
-            }
+            .flatMap { schedulerLockService.releaseJobLock(it) }
             .subscribe()
     }
 }

@@ -1,188 +1,131 @@
 package it.pagopa.wallet.scheduler.service
 
-import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.exceptions.LockNotAcquiredException
-import it.pagopa.wallet.scheduler.exceptions.LockNotReleasedException
-import it.pagopa.wallet.scheduler.exceptions.SemNotAcquiredException
-import it.pagopa.wallet.scheduler.exceptions.SemNotReleasedException
-import java.util.concurrent.TimeUnit
-import kotlin.test.Test
-import kotlinx.coroutines.reactor.mono
+import it.pagopa.wallet.scheduler.repositories.redis.ExclusiveLockDocument
+import it.pagopa.wallet.scheduler.repositories.redis.ReactiveExclusiveLockDocumentWrapper
+import it.pagopa.wallet.scheduler.services.SchedulerLockService
+import java.time.Duration
+import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
-import org.redisson.api.RLockReactive
-import org.redisson.api.RPermitExpirableSemaphoreReactive
-import org.redisson.api.RedissonReactiveClient
 import reactor.core.publisher.Mono
-import reactor.kotlin.test.test
+import reactor.test.StepVerifier
 
 class SchedulerLockServiceTest {
-    private val rLockReactive: RLockReactive = mock()
-    private val rPermitExpirableSemaphoreReactive: RPermitExpirableSemaphoreReactive = mock()
-    private val redissonClient: RedissonReactiveClient = mock()
-    private val redisJobLockPolicyConfig: RedisJobLockPolicyConfig =
-        RedisJobLockPolicyConfig("keyspace", 20, 2)
-    private val schedulerLockService: SchedulerLockService =
-        SchedulerLockService(redissonClient, redisJobLockPolicyConfig)
-
-    /*+ Lock tests **/
+    private val reactiveExclusiveLockDocumentWrapper: ReactiveExclusiveLockDocumentWrapper = mock()
+    private val schedulerLockService = SchedulerLockService(reactiveExclusiveLockDocumentWrapper)
 
     @Test
-    fun `Should acquire lock`() {
-        // pre-requisites
-        val jobName = "job-name-lock"
-        given(redissonClient.getLock(any<String>())).willReturn(rLockReactive)
-        given(rLockReactive.tryLock(any(), any(), any())).willReturn(mono { true })
+    fun `should acquire lock successfully`() {
+        val jobName = "test-job"
+        val ttl = Duration.ofMinutes(5)
+        val lockDocument = ExclusiveLockDocument(jobName, SchedulerLockService.OWNER)
 
-        // Test
-        schedulerLockService.acquireJobLock(jobName).test().expectNext(Unit).verifyComplete()
+        whenever(reactiveExclusiveLockDocumentWrapper.saveIfAbsent(any(), any()))
+            .thenReturn(Mono.just(true))
 
-        // verifications
-        verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
-        verify(rLockReactive, times(1)).tryLock(2, 20, TimeUnit.MILLISECONDS)
-    }
-
-    @Test
-    fun `Should release lock`() {
-        // pre-requisites
-        val jobName = "job-name-lock"
-        given(redissonClient.getLock(any<String>())).willReturn(rLockReactive)
-        given(rLockReactive.unlock()).willReturn(Mono.empty())
-
-        // Test
-        schedulerLockService.releaseJobLock(jobName).test().expectNext(Unit).verifyComplete()
-
-        // verifications
-        verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
-        verify(rLockReactive, times(1)).unlock()
-    }
-
-    @Test
-    fun `Should throw LockNotAcquiredException when lock is already acquired`() {
-        // pre-requisites
-        val jobName = "job-name-lock"
-        given(redissonClient.getLock(any<String>())).willReturn(rLockReactive)
-        given(rLockReactive.tryLock(any(), any(), any())).willReturn(Mono.just(false))
-
-        // Test
-        schedulerLockService
-            .acquireJobLock("job-name-lock")
-            .test()
-            .expectError(LockNotAcquiredException::class.java)
-            .verify()
-
-        // verifications
-        verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
-        verify(rLockReactive, times(1)).tryLock(2, 20, TimeUnit.MILLISECONDS)
-    }
-
-    @Test
-    fun `Should throw LockNotReleasedException when fail lock release`() {
-        // pre-requisites
-        val jobName = "job-name-lock"
-        given(redissonClient.getLock(any<String>())).willReturn(rLockReactive)
-        given(rLockReactive.unlock()).willReturn(Mono.error(RuntimeException("Release lock error")))
-
-        // Test
-        schedulerLockService
-            .releaseJobLock("job-name-lock")
-            .test()
-            .expectError(LockNotReleasedException::class.java)
-            .verify()
-
-        // verifications
-        verify(redissonClient, times(1)).getLock("keyspace:lock:$jobName")
-        verify(rLockReactive, times(1)).unlock()
-    }
-
-    /*+ Semaphore tests **/
-
-    @Test
-    fun `Should acquire semaphore`() {
-        // pre-requisites
-        val jobName = "job-name-semaphore"
-        val semaphoreId = "semaphore-id"
-        given(redissonClient.getPermitExpirableSemaphore(any<String>()))
-            .willReturn(rPermitExpirableSemaphoreReactive)
-        given(rPermitExpirableSemaphoreReactive.trySetPermits(any())).willReturn(mono { true })
-        given(rPermitExpirableSemaphoreReactive.tryAcquire(any(), any(), any()))
-            .willReturn(mono { semaphoreId })
-
-        // Test
-        schedulerLockService
-            .acquireJobSemaphore(jobName)
-            .test()
-            .expectNext(semaphoreId)
+        StepVerifier.create(schedulerLockService.acquireJobLock(jobName, ttl))
+            .expectNextMatches { doc ->
+                doc.id == jobName && doc.holderName == SchedulerLockService.OWNER
+            }
             .verifyComplete()
 
-        // verifications
-        verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
-        verify(rPermitExpirableSemaphoreReactive, times(1)).trySetPermits(1)
-        verify(rPermitExpirableSemaphoreReactive, times(1)).tryAcquire(2, 20, TimeUnit.MILLISECONDS)
+        verify(reactiveExclusiveLockDocumentWrapper)
+            .saveIfAbsent(
+                argThat { doc ->
+                    doc.id == jobName && doc.holderName == SchedulerLockService.OWNER
+                },
+                eq(ttl)
+            )
     }
 
     @Test
-    fun `Should release semaphore`() {
-        // pre-requisites
-        val jobName = "job-name-semaphore"
-        val semaphoreId = "semaphore-id"
-        given(redissonClient.getPermitExpirableSemaphore(any<String>()))
-            .willReturn(rPermitExpirableSemaphoreReactive)
-        given(rPermitExpirableSemaphoreReactive.release(any<String>())).willReturn(Mono.empty())
+    fun `should throw exception when lock is not acquired`() {
+        val jobName = "test-job"
+        val ttl = Duration.ofMinutes(5)
 
-        // Test
-        schedulerLockService
-            .releaseJobSemaphore(jobName, semaphoreId)
-            .test()
-            .expectNext(Unit)
+        whenever(reactiveExclusiveLockDocumentWrapper.saveIfAbsent(any(), any()))
+            .thenReturn(Mono.just(false))
+
+        StepVerifier.create(schedulerLockService.acquireJobLock(jobName, ttl))
+            .expectErrorMatches { error ->
+                error is LockNotAcquiredException && error.message!!.contains("test-job")
+            }
+            .verify()
+
+        verify(reactiveExclusiveLockDocumentWrapper).saveIfAbsent(any(), any())
+    }
+
+    @Test
+    fun `should handle error when acquiring lock`() {
+        val jobName = "test-job"
+        val ttl = Duration.ofMinutes(5)
+        val testException = RuntimeException("Redis connection error")
+
+        whenever(reactiveExclusiveLockDocumentWrapper.saveIfAbsent(any(), any()))
+            .thenReturn(Mono.error(testException))
+
+        StepVerifier.create(schedulerLockService.acquireJobLock(jobName, ttl)).verifyError()
+
+        verify(reactiveExclusiveLockDocumentWrapper).saveIfAbsent(any(), any())
+    }
+
+    @Test
+    fun `should release lock successfully`() {
+        val jobName = "test-job"
+        val lockDocument = ExclusiveLockDocument(jobName, SchedulerLockService.OWNER)
+
+        whenever(reactiveExclusiveLockDocumentWrapper.deleteById(jobName))
+            .thenReturn(Mono.just(true))
+
+        StepVerifier.create(schedulerLockService.releaseJobLock(lockDocument))
+            .expectNext(true)
             .verifyComplete()
 
-        // verifications
-        verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
-        verify(rPermitExpirableSemaphoreReactive, times(1)).release(semaphoreId)
+        verify(reactiveExclusiveLockDocumentWrapper).deleteById(jobName)
     }
 
     @Test
-    fun `Should throw SemNotAcquiredException when semaphore is already acquired`() {
-        // pre-requisites
-        val jobName = "job-name-semaphore"
-        given(redissonClient.getPermitExpirableSemaphore(any<String>()))
-            .willReturn(rPermitExpirableSemaphoreReactive)
-        given(rPermitExpirableSemaphoreReactive.trySetPermits(1)).willReturn(Mono.just(true))
-        given(rPermitExpirableSemaphoreReactive.tryAcquire(any(), any(), any()))
-            .willReturn(Mono.error(RuntimeException("Acquire semaphore error")))
+    fun `should handle error when releasing lock`() {
+        val jobName = "test-job"
+        val lockDocument = ExclusiveLockDocument(jobName, SchedulerLockService.OWNER)
+        val testException = RuntimeException("Redis connection error")
 
-        // Test
-        schedulerLockService
-            .acquireJobSemaphore(jobName)
-            .test()
-            .expectError(SemNotAcquiredException::class.java)
-            .verify()
+        whenever(reactiveExclusiveLockDocumentWrapper.deleteById(jobName))
+            .thenReturn(Mono.error(testException))
 
-        // verifications
-        verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
-        verify(rPermitExpirableSemaphoreReactive, times(1)).trySetPermits(1)
-        verify(rPermitExpirableSemaphoreReactive, times(1)).tryAcquire(2, 20, TimeUnit.MILLISECONDS)
+        StepVerifier.create(schedulerLockService.releaseJobLock(lockDocument)).verifyError()
+
+        verify(reactiveExclusiveLockDocumentWrapper).deleteById(jobName)
     }
 
     @Test
-    fun `Should throw SemNotReleasedException when fail semaphore release`() {
-        // pre-requisites
-        val jobName = "job-name-semaphore"
-        val semaphoreId = "semaphore-id"
-        given(redissonClient.getPermitExpirableSemaphore(any<String>()))
-            .willReturn(rPermitExpirableSemaphoreReactive)
-        given(rPermitExpirableSemaphoreReactive.release(any<String>()))
-            .willReturn(Mono.error(RuntimeException("Release semaphore error")))
+    fun `should return false when lock is not released`() {
+        val jobName = "test-job"
+        val lockDocument = ExclusiveLockDocument(jobName, SchedulerLockService.OWNER)
 
-        // Test
-        schedulerLockService
-            .releaseJobSemaphore(jobName, semaphoreId)
-            .test()
-            .expectError(SemNotReleasedException::class.java)
-            .verify()
+        whenever(reactiveExclusiveLockDocumentWrapper.deleteById(jobName))
+            .thenReturn(Mono.just(false))
 
-        // verifications
-        verify(redissonClient, times(1)).getPermitExpirableSemaphore("keyspace:sem:$jobName")
-        verify(rPermitExpirableSemaphoreReactive, times(1)).release(semaphoreId)
+        StepVerifier.create(schedulerLockService.releaseJobLock(lockDocument))
+            .expectNext(false)
+            .verifyComplete()
+
+        verify(reactiveExclusiveLockDocumentWrapper).deleteById(jobName)
+    }
+
+    @Test
+    fun `should use correct owner in lock document`() {
+        val jobName = "test-job"
+        val ttl = Duration.ofMinutes(5)
+
+        whenever(reactiveExclusiveLockDocumentWrapper.saveIfAbsent(any(), any()))
+            .thenReturn(Mono.just(true))
+
+        StepVerifier.create(schedulerLockService.acquireJobLock(jobName, ttl))
+            .expectNextMatches { doc -> doc.holderName == "wallet-scheduler-service" }
+            .verifyComplete()
+
+        verify(reactiveExclusiveLockDocumentWrapper)
+            .saveIfAbsent(argThat { doc -> doc.holderName == "wallet-scheduler-service" }, eq(ttl))
     }
 }
