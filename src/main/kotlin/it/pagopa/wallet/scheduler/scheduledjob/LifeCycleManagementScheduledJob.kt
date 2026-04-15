@@ -3,7 +3,7 @@ package it.pagopa.wallet.scheduler.scheduledjob
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementExecutionConfig
 import it.pagopa.wallet.scheduler.jobs.config.LifecycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.jobs.lifecyclemanagement.UpdateTtlWalletJob
-import it.pagopa.wallet.scheduler.service.SchedulerLockService
+import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -23,10 +23,11 @@ class LifeCycleManagementScheduledJob(
     @Scheduled(cron = "\${lifecycle-management-job.execution.cron}")
     fun processLifeCycleWallets() {
         val startTime = Instant.now()
+        val lockTtl = Duration.ofSeconds(jobConfiguration.lockTtlSeconds.toLong())
         schedulerLockService
-            .acquireJobSemaphore(jobName = updateTtlWalletJob.id())
-            .doOnError { logger.error("Unable to start job without semaphore acquiring", it) }
-            .flatMap { semaphoreId ->
+            .acquireJobLock(updateTtlWalletJob.id(), lockTtl)
+            .doOnError { logger.error("Unable to start job without acquiring lock", it) }
+            .flatMap { lockDocument ->
                 updateTtlWalletJob
                     .process(
                         LifecycleManagementJobConfiguration(
@@ -44,14 +45,9 @@ class LifeCycleManagementScheduledJob(
                         )
                     }
                     .onErrorResume { Mono.empty() }
-                    .thenReturn(semaphoreId)
+                    .thenReturn(lockDocument)
             }
-            .flatMap {
-                schedulerLockService.releaseJobSemaphore(
-                    jobName = updateTtlWalletJob.id(),
-                    semaphoreId = it
-                )
-            }
+            .flatMap { schedulerLockService.releaseJobLock(it) }
             .subscribe()
     }
 }

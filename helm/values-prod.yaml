@@ -20,7 +20,7 @@ microservice-chart:
     envSecret: {}
   image:
     repository: pagopapitncoreacr.azurecr.io/pagopapaymentwalletschedulerservice
-    tag: "0.11.0"
+    tag: "0.12.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -118,16 +118,16 @@ microservice-chart:
     SCHEDULER_REDIS_RESUME_KEYSPACE: "pay-wallet-scheduler"
     SCHEDULER_REDIS_RESUME_TTL_IN_MIN: "2880" #2 days
     SCHEDULER_REDIS_JOB_LOCK_KEYSPACE: "pay-wallet-scheduler-locks"
-    SCHEDULER_REDIS_JOB_LOCK_TTL_MS: "30000"
-    SCHEDULER_REDIS_JOB_LOCK_WAIT_TIME_MS: "100"
     REDIS_HOST: pagopa-p-itn-pay-wallet-redis-std.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     PAYMENT_WALLET_JOB_EXECUTION_CRON: "-"
     PAYMENT_WALLET_JOB_EXECUTION_START_DATE: "2000-01-01T00:00:00Z"
     PAYMENT_WALLET_JOB_EXECUTION_END_DATE: "2000-01-01T00:00:00Z"
+    PAYMENT_WALLET_JOB_EXECUTION_LOCK_TTL_SECONDS: "60"
     LIFECYCLE_MANAGEMENT_JOB_EXECUTION_CRON: "-"
     LIFECYCLE_MANAGEMENT_JOB_EXECUTION_DAYS_THRESHOLD: "90"
+    LIFECYCLE_MANAGEMENT_JOB_EXECUTION_LOCK_TTL_SECONDS: "60" #to tune up
     LIFECYCLE_MANAGEMENT_JOB_QUERY_EXCLUDED_STATUSES: "VALIDATED"
     LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_LOW_RATE: "1" #to tune up
     LIFECYCLE_MANAGEMENT_JOB_QUERY_SETTINGS_HIGH_RATE: "5" #to tune up

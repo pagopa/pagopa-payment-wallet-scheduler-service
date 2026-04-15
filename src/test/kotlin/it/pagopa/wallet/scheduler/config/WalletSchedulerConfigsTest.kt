@@ -5,8 +5,6 @@ import de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfigura
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.redisson.api.RedissonReactiveClient
-import org.redisson.spring.starter.RedissonAutoConfigurationV2
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -17,12 +15,9 @@ import org.springframework.test.context.TestPropertySource
 @SpringBootTest
 @TestPropertySource(locations = ["classpath:application.test.properties"])
 @EnableConfigurationProperties(value = [WalletSearchConfig::class, RedisJobLockPolicyConfig::class])
-@EnableAutoConfiguration(
-    exclude = [EmbeddedMongoAutoConfiguration::class, RedissonAutoConfigurationV2::class]
-)
+@EnableAutoConfiguration(exclude = [EmbeddedMongoAutoConfiguration::class])
 class WalletSchedulerConfigsTest {
     @MockBean private lateinit var mongoClient: MongoClient
-    @MockBean private lateinit var redissonReactiveClient: RedissonReactiveClient
 
     @Autowired private lateinit var walletSearchConfig: WalletSearchConfig
     @Autowired private lateinit var redisJobLockPolicyConfig: RedisJobLockPolicyConfig
@@ -33,7 +28,5 @@ class WalletSchedulerConfigsTest {
         Assertions.assertEquals(walletSearchConfig.status, "VALIDATED")
         Assertions.assertEquals(walletSearchConfig.limit, 10)
         Assertions.assertEquals(redisJobLockPolicyConfig.keyspace, "keyspace")
-        Assertions.assertEquals(redisJobLockPolicyConfig.ttlMs, 20000)
-        Assertions.assertEquals(redisJobLockPolicyConfig.waitTimeMs, 2000)
     }
 }
