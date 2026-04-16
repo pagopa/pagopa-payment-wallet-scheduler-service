@@ -133,3 +133,28 @@ stages:
                 exit 1
               fi
             displayName: 'Get event from Azurite queue and validate'
+          - script: |
+              sleep 15
+              echo "Starting wallet lifecycle management integration testing..."
+              
+              docker cp integration-test/lifecycle-integration-test.js mongodb:/tmp/lifecycle-integration-test.js
+              
+              # Executing the script and check the result
+              docker exec mongodb mongosh -u admin -p password --authenticationDatabase admin --quiet /tmp/lifecycle-integration-test.js
+              
+              # Check of the exit code of the script
+              if [ $? -ne 0 ]; then
+                echo "Integration test of lifecycle management failed! Check the logs for more details ..."
+                exit 1
+              fi
+            displayName: 'Check ttl set by lifecycle job'
+          - script: |
+              echo "Printing logs for all running containers:"
+              for container in $(docker ps -q); do
+                name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
+                echo "===== Logs for $name ====="
+                docker logs $container
+                echo "===== End of logs for $name ====="
+              done
+            condition: always()
+            displayName: 'Print Docker container logs'
