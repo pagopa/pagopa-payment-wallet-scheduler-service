@@ -5,10 +5,7 @@ import java.time.LocalTime
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("lifecycle-management-job.query")
-data class LifecycleManagementQueryConfig(
-    val excludedStatuses: List<String>,
-    val settings: QuerySettings
-) {
+data class LifecycleManagementQueryConfig(val settings: QuerySettings) {
     val lifeCycleManagementTimeBasedRate = TimeBasedRate.fromQuerySettings(settings)
 }
 

@@ -32,17 +32,18 @@ class LifecycleManagementService(
 
     fun setWalletsTtl(endDate: Instant): Mono<Int> {
         val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
+        val searchedStatuses = shortTermAllowedStatuses union longTermAllowedStatuses
         return repository
-            .findByTtlNullAndStatusNotInAndUpdateDateBefore(
-                queryConfig.excludedStatuses,
+            .findByTtlNullAndStatusInAndUpdateDateBefore(
+                searchedStatuses,
                 endDate.toString(),
                 queryRate
             )
             .doFirst {
                 logger.info(
-                    "Searching wallets for lifecycle management. End date [{}] - Excluded statuses  [{}] - Limit [{}]",
+                    "Searching wallets for lifecycle management. End date [{}] - Statuses  [{}] - Limit [{}]",
                     endDate,
-                    queryConfig.excludedStatuses,
+                    searchedStatuses,
                     queryRate
                 )
             }

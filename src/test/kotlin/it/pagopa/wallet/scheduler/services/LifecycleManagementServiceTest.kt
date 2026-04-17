@@ -81,7 +81,6 @@ class LifecycleManagementServiceTest {
 
     private val queryConfig: LifecycleManagementQueryConfig =
         LifecycleManagementQueryConfig(
-            listOf(WalletTestUtils.WALLET_VALIDATED_STATUS),
             QuerySettings(1, 10, 60, LocalTime.of(10, 0), LocalTime.of(12, 0))
         )
 
@@ -97,13 +96,7 @@ class LifecycleManagementServiceTest {
         // Arrange
         val endDate = Instant.now()
 
-        whenever(
-                walletRepository.findByTtlNullAndStatusNotInAndUpdateDateBefore(
-                    eq(queryConfig.excludedStatuses),
-                    any(),
-                    any()
-                )
-            )
+        whenever(walletRepository.findByTtlNullAndStatusInAndUpdateDateBefore(any(), any(), any()))
             .thenReturn(Flux.just(wallet))
 
         whenever(walletBulkRepository.bulkUpdateTtl(any())).thenReturn(Mono.just(1))
@@ -175,8 +168,8 @@ class LifecycleManagementServiceTest {
         val endDate = Instant.now()
 
         whenever(
-                walletRepository.findByTtlNullAndStatusNotInAndUpdateDateBefore(
-                    eq(queryConfig.excludedStatuses),
+                walletRepository.findByTtlNullAndStatusInAndUpdateDateBefore(
+                    any(),
                     eq(endDate.toString()),
                     any()
                 )
@@ -198,8 +191,8 @@ class LifecycleManagementServiceTest {
         val dbError = RuntimeException("Database timeout")
 
         whenever(
-                walletRepository.findByTtlNullAndStatusNotInAndUpdateDateBefore(
-                    eq(queryConfig.excludedStatuses),
+                walletRepository.findByTtlNullAndStatusInAndUpdateDateBefore(
+                    any(),
                     eq(endDate.toString()),
                     any()
                 )
