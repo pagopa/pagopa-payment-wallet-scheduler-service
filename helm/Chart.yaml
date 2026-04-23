@@ -2,8 +2,8 @@ apiVersion: v2
 name: wallet-scheduler
 description: Application that defines and executes scheduled jobs related to wallet's domain
 type: application
-version: 0.13.1
-appVersion: 0.12.1
+version: 0.14.0
+appVersion: 0.13.0
 dependencies:
   - name: microservice-chart
     version: 7.5.0
