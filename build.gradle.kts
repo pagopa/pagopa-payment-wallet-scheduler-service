@@ -12,7 +12,7 @@ plugins {
 
 group = "it.pagopa.wallet"
 
-version = "0.12.1"
+version = "0.14.1"
 
 description = "pagopa-payment-wallet-scheduler-service"
 
@@ -25,7 +25,7 @@ repositories {
 
 object Dependencies {
   const val ecsLoggingVersion = "1.5.0"
-  const val openTelemetryVersion = "1.37.0"
+  const val openTelemetryVersion = "1.60.1"
 }
 
 dependencyLocking { lockAllConfigurations() }
