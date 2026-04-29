@@ -1,11 +1,13 @@
 package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.documents.wallets.Wallet
+import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
 import java.time.Duration
 import java.time.Instant
 import java.time.Period
@@ -22,7 +24,8 @@ class LifecycleManagementService(
     @param:Autowired val repository: WalletRepository,
     @param:Autowired val walletBulkRepository: WalletBulkRepository,
     private val ttlConfig: LifecycleManagementTtlConfig,
-    private val queryConfig: LifecycleManagementQueryConfig
+    private val queryConfig: LifecycleManagementQueryConfig,
+    private val tracingUtils: TracingUtils
 ) {
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
@@ -49,7 +52,22 @@ class LifecycleManagementService(
             }
             .doOnError { logger.error("Wallets search query failed!", it) }
             .switchIfEmpty(Mono.error(NoWalletFoundException()))
-            .collectMap({ wallet -> wallet.id }, { wallet -> calculateTtl(wallet) })
+            .collectMap(
+                { wallet -> wallet.id },
+                { wallet ->
+                    val ttl = calculateTtl(wallet)
+                    val lifecycleItemStats =
+                        LifeCycleTracerUtils.WalletLifecycleItemStats(wallet.status, ttl.toLong())
+                    tracingUtils.addSpan(
+                        lifecycleItemStats.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
+                        lifecycleItemStats.getSpanAttributes(
+                            lifecycleItemStats.status,
+                            lifecycleItemStats.ttlApplied
+                        )
+                    )
+                    ttl
+                }
+            )
             .flatMap { walletBulkRepository.bulkUpdateTtl(it) }
     }
 
