@@ -2,6 +2,7 @@ package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.WalletTestUtils
+import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.config.properties.QuerySettings
@@ -70,6 +71,7 @@ class LifecycleManagementServiceTest {
 
     private val walletRepository: WalletRepository = mock()
     private val walletBulkRepository: WalletBulkRepository = mock()
+    private val tracingUtils: TracingUtils = mock()
 
     // Inizializziamo la config con i valori usati nel calcolo delle costanti sopra
     private val ttlConfig: LifecycleManagementTtlConfig =
@@ -85,7 +87,13 @@ class LifecycleManagementServiceTest {
         )
 
     private val lifecycleManagementService: LifecycleManagementService =
-        LifecycleManagementService(walletRepository, walletBulkRepository, ttlConfig, queryConfig)
+        LifecycleManagementService(
+            walletRepository,
+            walletBulkRepository,
+            ttlConfig,
+            queryConfig,
+            tracingUtils
+        )
 
     @ParameterizedTest
     @MethodSource
@@ -101,10 +109,14 @@ class LifecycleManagementServiceTest {
 
         whenever(walletBulkRepository.bulkUpdateTtl(any())).thenReturn(Mono.just(1))
 
+        doNothing().`when`(tracingUtils).addSpan(anyOrNull(), anyOrNull())
+
         // Act & Assert
         StepVerifier.create(lifecycleManagementService.setWalletsTtl(endDate))
             .expectNext(1)
             .verifyComplete()
+        // Verify that the tracing is done
+        verify(tracingUtils, times(1)).addSpan(anyOrNull(), anyOrNull())
 
         argumentCaptor<Map<String, Int>>().apply {
             verify(walletBulkRepository).bulkUpdateTtl(capture())
