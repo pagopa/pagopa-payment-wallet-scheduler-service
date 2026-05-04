@@ -36,6 +36,7 @@ class LifecycleManagementService(
     fun setWalletsTtl(endDate: Instant): Mono<Int> {
         val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
         val searchedStatuses = shortTermAllowedStatuses union longTermAllowedStatuses
+        val lifecycleItemStatsArray = ArrayDeque<LifeCycleTracerUtils.WalletLifecycleItemStats>()
         return repository
             .findByTtlNullAndStatusInAndUpdateDateBefore(
                 searchedStatuses,
@@ -56,19 +57,30 @@ class LifecycleManagementService(
                 { wallet -> wallet.id },
                 { wallet ->
                     val ttl = calculateTtl(wallet)
-                    val lifecycleItemStats =
+                    val stat =
                         LifeCycleTracerUtils.WalletLifecycleItemStats(wallet.status, ttl.toLong())
-                    tracingUtils.addSpan(
-                        lifecycleItemStats.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
-                        lifecycleItemStats.getSpanAttributes(
-                            lifecycleItemStats.status,
-                            lifecycleItemStats.ttlApplied
-                        )
+                    lifecycleItemStatsArray.add(
+                        LifeCycleTracerUtils.WalletLifecycleItemStats(wallet.status, ttl.toLong())
                     )
-                    ttl
+                    Pair(ttl, stat)
                 }
             )
-            .flatMap { walletBulkRepository.bulkUpdateTtl(it) }
+            .flatMap { walletTtlStatMap ->
+                val ttlMap = walletTtlStatMap.mapValues { it.value.first }
+                val statMap = walletTtlStatMap.mapValues { it.value.second }
+                walletBulkRepository.bulkUpdateTtl(ttlMap).map { bulkResult ->
+                    Pair(bulkResult, statMap)
+                }
+            }
+            .doOnNext { (_, statsList) ->
+                statsList.values.forEach { itemStat ->
+                    tracingUtils.addSpan(
+                        itemStat.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
+                        itemStat.getSpanAttributes(itemStat.status, itemStat.ttlApplied)
+                    )
+                }
+            }
+            .map { it.first }
     }
 
     private fun calculateTtl(wallet: Wallet): Int {

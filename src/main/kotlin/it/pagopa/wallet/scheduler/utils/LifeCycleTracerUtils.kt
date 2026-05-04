@@ -36,7 +36,7 @@ class LifeCycleTracerUtils {
     data class WalletLifecycleItemStats(val status: String, val ttlApplied: Long) {
         val WALLET_LIFECYCLE_ITEM_SPAN_NAME = "payWalletLifeCycleItem"
         val WALLET_LIFECYCLE_ITEM_STATUS_KEY =
-            AttributeKey.stringKey("payWallet.lifeCycle.item.wallet_Status")
+            AttributeKey.stringKey("payWallet.lifeCycle.item.walletStatus")
         val WALLET_LIFECYCLE_ITEM_TTL_APPLIED_KEY =
             AttributeKey.longKey("payWallet.lifeCycle.item.ttlApplied")
 
