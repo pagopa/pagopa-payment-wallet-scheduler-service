@@ -16,6 +16,7 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.stream.Stream
+import kotlin.test.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -25,7 +26,6 @@ import org.mockito.kotlin.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import kotlin.test.assertEquals
 
 class LifecycleManagementServiceTest {
     companion object {
@@ -120,12 +120,14 @@ class LifecycleManagementServiceTest {
             .verifyComplete()
         // Verify that the tracing is done
         val attributesCaptor = argumentCaptor<Attributes>()
-        verify(tracingUtils, times(1)).addSpan(eq("payWalletLifeCycleItem"), attributesCaptor.capture())
+        verify(tracingUtils, times(1))
+            .addSpan(eq("payWalletLifeCycleItem"), attributesCaptor.capture())
         val attrs = attributesCaptor.firstValue
-        val keys = LifeCycleTracerUtils.WalletLifecycleItemStats(
-            status = "",
-            ttlApplied = 0L,
-        )
+        val keys =
+            LifeCycleTracerUtils.WalletLifecycleItemStats(
+                status = "",
+                ttlApplied = 0L,
+            )
         assertEquals(wallet.status, attrs.get<String>(keys.WALLET_LIFECYCLE_ITEM_STATUS_KEY))
 
         argumentCaptor<Map<String, Int>>().apply {
