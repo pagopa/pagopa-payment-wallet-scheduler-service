@@ -9,12 +9,16 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import io.opentelemetry.api.common.Attributes
+import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
+import org.mockito.kotlin.argumentCaptor
 
 class UpdateTtlWalletJobTest {
 
@@ -39,7 +43,20 @@ class UpdateTtlWalletJobTest {
 
         // verifications
         verify(lifecycleManagementService, times(1)).setWalletsTtl(endDate)
-        verify(tracingUtils, times(1)).addSpan(anyOrNull(), anyOrNull())
+        val attributesCaptor = argumentCaptor<Attributes>()
+        verify(tracingUtils, times(1)).addSpan(eq("payWalletLifeCycleSession"), attributesCaptor.capture())
+
+        val attrs = attributesCaptor.firstValue
+        val keys = LifeCycleTracerUtils.WalletLifecycleSessionStats(
+            totalItem = 0,
+            elapsedTime = 0,
+            lastProcessedTimestamp = ""
+        )
+        assertEquals(1L, attrs.get(keys.WALLET_LIFECYCLE_SESSION_TOTAL_ITEM_KEY))
+        assertEquals(
+            true,
+            attrs.get(keys.WALLET_LIFECYCLE_SESSION_LAST_PROCESSED_TIMESTAMP_KEY) != null
+        )
     }
 
     @Test

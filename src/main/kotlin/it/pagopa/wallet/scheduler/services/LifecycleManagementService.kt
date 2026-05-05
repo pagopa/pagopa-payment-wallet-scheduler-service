@@ -36,7 +36,7 @@ class LifecycleManagementService(
     fun setWalletsTtl(endDate: Instant): Mono<Int> {
         val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
         val searchedStatuses = shortTermAllowedStatuses union longTermAllowedStatuses
-        val lifecycleItemStatsArray = ArrayDeque<LifeCycleTracerUtils.WalletLifecycleItemStats>()
+
         return repository
             .findByTtlNullAndStatusInAndUpdateDateBefore(
                 searchedStatuses,
@@ -59,9 +59,6 @@ class LifecycleManagementService(
                     val ttl = calculateTtl(wallet)
                     val stat =
                         LifeCycleTracerUtils.WalletLifecycleItemStats(wallet.status, ttl.toLong())
-                    lifecycleItemStatsArray.add(
-                        LifeCycleTracerUtils.WalletLifecycleItemStats(wallet.status, ttl.toLong())
-                    )
                     Pair(ttl, stat)
                 }
             )

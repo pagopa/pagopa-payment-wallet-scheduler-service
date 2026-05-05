@@ -1,5 +1,6 @@
 package it.pagopa.wallet.scheduler.services
 
+import io.opentelemetry.api.common.Attributes
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.WalletTestUtils
 import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
@@ -9,6 +10,7 @@ import it.pagopa.wallet.scheduler.config.properties.QuerySettings
 import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -23,6 +25,7 @@ import org.mockito.kotlin.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import kotlin.test.assertEquals
 
 class LifecycleManagementServiceTest {
     companion object {
@@ -116,7 +119,14 @@ class LifecycleManagementServiceTest {
             .expectNext(1)
             .verifyComplete()
         // Verify that the tracing is done
-        verify(tracingUtils, times(1)).addSpan(anyOrNull(), anyOrNull())
+        val attributesCaptor = argumentCaptor<Attributes>()
+        verify(tracingUtils, times(1)).addSpan(eq("payWalletLifeCycleItem"), attributesCaptor.capture())
+        val attrs = attributesCaptor.firstValue
+        val keys = LifeCycleTracerUtils.WalletLifecycleItemStats(
+            status = "",
+            ttlApplied = 0L,
+        )
+        assertEquals(wallet.status, attrs.get<String>(keys.WALLET_LIFECYCLE_ITEM_STATUS_KEY))
 
         argumentCaptor<Map<String, Int>>().apply {
             verify(walletBulkRepository).bulkUpdateTtl(capture())
