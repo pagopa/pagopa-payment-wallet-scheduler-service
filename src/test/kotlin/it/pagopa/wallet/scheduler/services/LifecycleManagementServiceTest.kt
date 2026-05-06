@@ -127,8 +127,10 @@ class LifecycleManagementServiceTest {
             LifeCycleTracerUtils.WalletLifecycleItemStats(
                 status = "",
                 ttlApplied = 0L,
+                walletId = "id"
             )
         assertEquals(wallet.status, attrs.get<String>(keys.WALLET_LIFECYCLE_ITEM_STATUS_KEY))
+        assertEquals(wallet.id, attrs.get<String>(keys.WALLET_LIFECYCLE_ITEM_ID_KEY))
 
         argumentCaptor<Map<String, Int>>().apply {
             verify(walletBulkRepository).bulkUpdateTtl(capture())

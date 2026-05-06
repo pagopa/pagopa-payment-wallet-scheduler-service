@@ -58,7 +58,11 @@ class LifecycleManagementService(
                 { wallet ->
                     val ttl = calculateTtl(wallet)
                     val stat =
-                        LifeCycleTracerUtils.WalletLifecycleItemStats(wallet.status, ttl.toLong())
+                        LifeCycleTracerUtils.WalletLifecycleItemStats(
+                            wallet.status,
+                            ttl.toLong(),
+                            wallet.id
+                        )
                     Pair(ttl, stat)
                 }
             )
@@ -73,7 +77,11 @@ class LifecycleManagementService(
                 statsList.values.forEach { itemStat ->
                     tracingUtils.addSpan(
                         itemStat.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
-                        itemStat.getSpanAttributes(itemStat.status, itemStat.ttlApplied)
+                        itemStat.getSpanAttributes(
+                            itemStat.status,
+                            itemStat.ttlApplied,
+                            itemStat.walletId
+                        )
                     )
                 }
             }

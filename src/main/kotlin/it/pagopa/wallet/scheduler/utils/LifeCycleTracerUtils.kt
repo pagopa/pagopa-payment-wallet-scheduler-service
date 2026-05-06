@@ -33,19 +33,27 @@ class LifeCycleTracerUtils {
             )
     }
 
-    data class WalletLifecycleItemStats(val status: String, val ttlApplied: Long) {
+    data class WalletLifecycleItemStats(
+        val status: String,
+        val ttlApplied: Long,
+        val walletId: String
+    ) {
         val WALLET_LIFECYCLE_ITEM_SPAN_NAME = "payWalletLifeCycleItem"
         val WALLET_LIFECYCLE_ITEM_STATUS_KEY =
             AttributeKey.stringKey("payWallet.lifeCycle.item.walletStatus")
         val WALLET_LIFECYCLE_ITEM_TTL_APPLIED_KEY =
             AttributeKey.longKey("payWallet.lifeCycle.item.ttlApplied")
+        val WALLET_LIFECYCLE_ITEM_ID_KEY =
+            AttributeKey.stringKey("payWallet.lifeCycle.item.walletId")
 
-        fun getSpanAttributes(status: String, ttlApplied: Long): Attributes =
+        fun getSpanAttributes(status: String, ttlApplied: Long, walletId: String): Attributes =
             Attributes.of(
                 WALLET_LIFECYCLE_ITEM_STATUS_KEY,
                 status,
                 WALLET_LIFECYCLE_ITEM_TTL_APPLIED_KEY,
-                ttlApplied
+                ttlApplied,
+                WALLET_LIFECYCLE_ITEM_ID_KEY,
+                walletId
             )
     }
 }
