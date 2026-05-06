@@ -31,9 +31,18 @@ class UpdateTtlWalletJobTest {
     fun `Should execute process successfully`() {
         // pre-requisites
         val endDate = Instant.now()
+        val lastProcessedTimestamp = endDate.toString()
         val lifecycleManagementJobConfiguration = LifecycleManagementJobConfiguration(endDate)
 
-        given(lifecycleManagementService.setWalletsTtl(any())).willReturn(Mono.just(1))
+        given(lifecycleManagementService.setWalletsTtl(any()))
+            .willReturn(
+                Mono.just(
+                    LifecycleManagementService.SetWalletsTtlResult(
+                        updatedWallets = 1,
+                        lastProcessedTimestamp = lastProcessedTimestamp
+                    )
+                )
+            )
         doNothing().`when`(tracingUtils).addSpan(anyOrNull(), anyOrNull())
 
         // Test
@@ -56,8 +65,8 @@ class UpdateTtlWalletJobTest {
             )
         assertEquals(1L, attrs.get(keys.WALLET_LIFECYCLE_SESSION_TOTAL_ITEM_KEY))
         assertEquals(
-            true,
-            attrs.get(keys.WALLET_LIFECYCLE_SESSION_LAST_PROCESSED_TIMESTAMP_KEY) != null
+            lastProcessedTimestamp,
+            attrs.get(keys.WALLET_LIFECYCLE_SESSION_LAST_PROCESSED_TIMESTAMP_KEY)
         )
     }
 

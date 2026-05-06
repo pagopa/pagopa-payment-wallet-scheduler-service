@@ -5,7 +5,6 @@ import it.pagopa.wallet.scheduler.jobs.ScheduledJob
 import it.pagopa.wallet.scheduler.jobs.config.LifecycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.services.LifecycleManagementService
 import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
-import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
@@ -37,12 +36,13 @@ class UpdateTtlWalletJob(
                 )
             }
             .elapsed()
-            .map { (elapsedMs, count) ->
+            .map { (elapsedMs, setWalletsTtlResult) ->
+                val count = setWalletsTtlResult.updatedWallets
                 val lifecycleSessionStats =
                     LifeCycleTracerUtils.WalletLifecycleSessionStats(
                         totalItem = count.toLong(),
                         elapsedTime = elapsedMs,
-                        lastProcessedTimestamp = Instant.now().toString()
+                        lastProcessedTimestamp = setWalletsTtlResult.lastProcessedTimestamp
                     )
                 tracingUtils.addSpan(
                     lifecycleSessionStats.WALLET_LIFECYCLE_SESSION_SPAN_NAME,

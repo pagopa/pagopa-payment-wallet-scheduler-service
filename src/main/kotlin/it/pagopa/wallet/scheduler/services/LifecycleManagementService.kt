@@ -28,12 +28,14 @@ class LifecycleManagementService(
     private val tracingUtils: TracingUtils
 ) {
 
+    data class SetWalletsTtlResult(val updatedWallets: Int, val lastProcessedTimestamp: String)
+
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
     val shortTermAllowedStatuses = setOf("CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR")
     val longTermAllowedStatuses = setOf("DELETED", "REPLACED")
     val npgValidOperationResult = setOf("EXECUTED")
 
-    fun setWalletsTtl(endDate: Instant): Mono<Int> {
+    fun setWalletsTtl(endDate: Instant): Mono<SetWalletsTtlResult> {
         val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
         val searchedStatuses = shortTermAllowedStatuses union longTermAllowedStatuses
 
@@ -53,39 +55,38 @@ class LifecycleManagementService(
             }
             .doOnError { logger.error("Wallets search query failed!", it) }
             .switchIfEmpty(Mono.error(NoWalletFoundException()))
-            .collectMap(
-                { wallet -> wallet.id },
-                { wallet ->
-                    val ttl = calculateTtl(wallet)
-                    val stat =
-                        LifeCycleTracerUtils.WalletLifecycleItemStats(
-                            wallet.status,
-                            ttl.toLong(),
-                            wallet.id
-                        )
-                    Pair(ttl, stat)
-                }
-            )
-            .flatMap { walletTtlStatMap ->
-                val ttlMap = walletTtlStatMap.mapValues { it.value.first }
-                val statMap = walletTtlStatMap.mapValues { it.value.second }
-                walletBulkRepository.bulkUpdateTtl(ttlMap).map { bulkResult ->
-                    Pair(bulkResult, statMap)
-                }
-            }
-            .doOnNext { (_, statsList) ->
-                statsList.values.forEach { itemStat ->
-                    tracingUtils.addSpan(
-                        itemStat.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
-                        itemStat.getSpanAttributes(
-                            itemStat.status,
-                            itemStat.ttlApplied,
-                            itemStat.walletId
-                        )
+            .collectList()
+            .flatMap { wallets ->
+                val lastProcessedTimestamp = wallets.last().updateDate.toString()
+                val ttlMap =
+                    wallets.associateBy(
+                        { wallet -> wallet.id },
+                        { wallet ->
+                            val ttl = calculateTtl(wallet)
+                            // For each wallets create a span
+                            val stat =
+                                LifeCycleTracerUtils.WalletLifecycleItemStats(
+                                    wallet.status,
+                                    ttl.toLong(),
+                                    wallet.id
+                                )
+                            tracingUtils.addSpan(
+                                stat.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
+                                stat.getSpanAttributes(stat.status, stat.ttlApplied, stat.walletId)
+                            )
+                            ttl
+                        }
                     )
+                walletBulkRepository.bulkUpdateTtl(ttlMap).map { bulkResult ->
+                    Pair(bulkResult, lastProcessedTimestamp)
                 }
             }
-            .map { it.first }
+            .map { (bulkResult, lastProcessedTimestamp) ->
+                SetWalletsTtlResult(
+                    updatedWallets = bulkResult,
+                    lastProcessedTimestamp = lastProcessedTimestamp
+                )
+            }
     }
 
     private fun calculateTtl(wallet: Wallet): Int {

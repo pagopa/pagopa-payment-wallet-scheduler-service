@@ -116,7 +116,10 @@ class LifecycleManagementServiceTest {
 
         // Act & Assert
         StepVerifier.create(lifecycleManagementService.setWalletsTtl(endDate))
-            .expectNext(1)
+            .assertNext { result ->
+                assertEquals(1, result.updatedWallets)
+                assertEquals(wallet.updateDate.toString(), result.lastProcessedTimestamp)
+            }
             .verifyComplete()
         // Verify that the tracing is done
         val attributesCaptor = argumentCaptor<Attributes>()
