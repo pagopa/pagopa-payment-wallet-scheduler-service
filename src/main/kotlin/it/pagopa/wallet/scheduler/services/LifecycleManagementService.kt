@@ -55,7 +55,7 @@ class LifecycleManagementService(
             .doOnError { logger.error("Wallets search query failed!", it) }
             .collectList()
             .flatMap { wallets ->
-                if (!wallets.isEmpty()) {
+                if (wallets.isNotEmpty()) {
                     val lastProcessedTimestamp = wallets.last().updateDate.toString()
                     val ttlMap =
                         wallets.associateBy(
