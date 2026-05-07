@@ -7,7 +7,6 @@ import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.config.properties.QuerySettings
-import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
@@ -207,8 +206,11 @@ class LifecycleManagementServiceTest {
 
         // Act & Assert
         StepVerifier.create(lifecycleManagementService.setWalletsTtl(endDate))
-            .expectError(NoWalletFoundException::class.java)
-            .verify()
+            .assertNext { result ->
+                assertEquals(0, result.updatedWallets)
+                assertEquals("", result.lastProcessedTimestamp)
+            }
+            .verifyComplete()
 
         verify(walletBulkRepository, never()).bulkUpdateTtl(any())
     }
