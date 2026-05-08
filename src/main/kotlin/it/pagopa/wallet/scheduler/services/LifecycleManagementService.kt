@@ -1,11 +1,12 @@
 package it.pagopa.wallet.scheduler.services
 
 import it.pagopa.wallet.documents.wallets.Wallet
+import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
-import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
 import java.time.Duration
 import java.time.Instant
 import java.time.Period
@@ -22,17 +23,21 @@ class LifecycleManagementService(
     @param:Autowired val repository: WalletRepository,
     @param:Autowired val walletBulkRepository: WalletBulkRepository,
     private val ttlConfig: LifecycleManagementTtlConfig,
-    private val queryConfig: LifecycleManagementQueryConfig
+    private val queryConfig: LifecycleManagementQueryConfig,
+    private val tracingUtils: TracingUtils
 ) {
+
+    data class SetWalletsTtlResult(val updatedWallets: Int, val lastProcessedTimestamp: String)
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
     val shortTermAllowedStatuses = setOf("CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR")
     val longTermAllowedStatuses = setOf("DELETED", "REPLACED")
     val npgValidOperationResult = setOf("EXECUTED")
 
-    fun setWalletsTtl(endDate: Instant): Mono<Int> {
+    fun setWalletsTtl(endDate: Instant): Mono<SetWalletsTtlResult> {
         val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
         val searchedStatuses = shortTermAllowedStatuses union longTermAllowedStatuses
+
         return repository
             .findByTtlNullAndStatusInAndUpdateDateBefore(
                 searchedStatuses,
@@ -48,9 +53,46 @@ class LifecycleManagementService(
                 )
             }
             .doOnError { logger.error("Wallets search query failed!", it) }
-            .switchIfEmpty(Mono.error(NoWalletFoundException()))
-            .collectMap({ wallet -> wallet.id }, { wallet -> calculateTtl(wallet) })
-            .flatMap { walletBulkRepository.bulkUpdateTtl(it) }
+            .collectList()
+            .flatMap { wallets ->
+                if (wallets.isNotEmpty()) {
+                    val lastProcessedTimestamp = wallets.last().updateDate.toString()
+                    val ttlMap =
+                        wallets.associateBy(
+                            { wallet -> wallet.id },
+                            { wallet ->
+                                val ttl = calculateTtl(wallet)
+                                // For each wallet create a span
+                                val stat =
+                                    LifeCycleTracerUtils.WalletLifecycleItemStats(
+                                        wallet.status,
+                                        ttl.toLong(),
+                                        wallet.id
+                                    )
+                                tracingUtils.addSpan(
+                                    stat.WALLET_LIFECYCLE_ITEM_SPAN_NAME,
+                                    stat.getSpanAttributes(
+                                        stat.status,
+                                        stat.ttlApplied,
+                                        stat.walletId
+                                    )
+                                )
+                                ttl
+                            }
+                        )
+                    walletBulkRepository.bulkUpdateTtl(ttlMap).map { bulkResult ->
+                        Pair(bulkResult, lastProcessedTimestamp)
+                    }
+                } else {
+                    Mono.just(Pair(0, ""))
+                }
+            }
+            .map { (bulkResult, lastProcessedTimestamp) ->
+                SetWalletsTtlResult(
+                    updatedWallets = bulkResult,
+                    lastProcessedTimestamp = lastProcessedTimestamp
+                )
+            }
     }
 
     private fun calculateTtl(wallet: Wallet): Int {

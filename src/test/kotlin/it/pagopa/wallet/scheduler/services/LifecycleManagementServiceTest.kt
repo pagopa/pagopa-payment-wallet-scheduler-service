@@ -1,18 +1,21 @@
 package it.pagopa.wallet.scheduler.services
 
+import io.opentelemetry.api.common.Attributes
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.WalletTestUtils
+import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.config.properties.QuerySettings
-import it.pagopa.wallet.scheduler.exceptions.NoWalletFoundException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
+import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.stream.Stream
+import kotlin.test.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -70,6 +73,7 @@ class LifecycleManagementServiceTest {
 
     private val walletRepository: WalletRepository = mock()
     private val walletBulkRepository: WalletBulkRepository = mock()
+    private val tracingUtils: TracingUtils = mock()
 
     // Inizializziamo la config con i valori usati nel calcolo delle costanti sopra
     private val ttlConfig: LifecycleManagementTtlConfig =
@@ -85,7 +89,13 @@ class LifecycleManagementServiceTest {
         )
 
     private val lifecycleManagementService: LifecycleManagementService =
-        LifecycleManagementService(walletRepository, walletBulkRepository, ttlConfig, queryConfig)
+        LifecycleManagementService(
+            walletRepository,
+            walletBulkRepository,
+            ttlConfig,
+            queryConfig,
+            tracingUtils
+        )
 
     @ParameterizedTest
     @MethodSource
@@ -101,10 +111,28 @@ class LifecycleManagementServiceTest {
 
         whenever(walletBulkRepository.bulkUpdateTtl(any())).thenReturn(Mono.just(1))
 
+        doNothing().`when`(tracingUtils).addSpan(anyOrNull(), anyOrNull())
+
         // Act & Assert
         StepVerifier.create(lifecycleManagementService.setWalletsTtl(endDate))
-            .expectNext(1)
+            .assertNext { result ->
+                assertEquals(1, result.updatedWallets)
+                assertEquals(wallet.updateDate.toString(), result.lastProcessedTimestamp)
+            }
             .verifyComplete()
+        // Verify that the tracing is done
+        val attributesCaptor = argumentCaptor<Attributes>()
+        verify(tracingUtils, times(1))
+            .addSpan(eq("payWalletLifeCycleItem"), attributesCaptor.capture())
+        val attrs = attributesCaptor.firstValue
+        val keys =
+            LifeCycleTracerUtils.WalletLifecycleItemStats(
+                status = "",
+                ttlApplied = 0L,
+                walletId = "id"
+            )
+        assertEquals(wallet.status, attrs.get<String>(keys.WALLET_LIFECYCLE_ITEM_STATUS_KEY))
+        assertEquals(wallet.id, attrs.get<String>(keys.WALLET_LIFECYCLE_ITEM_ID_KEY))
 
         argumentCaptor<Map<String, Int>>().apply {
             verify(walletBulkRepository).bulkUpdateTtl(capture())
@@ -178,8 +206,11 @@ class LifecycleManagementServiceTest {
 
         // Act & Assert
         StepVerifier.create(lifecycleManagementService.setWalletsTtl(endDate))
-            .expectError(NoWalletFoundException::class.java)
-            .verify()
+            .assertNext { result ->
+                assertEquals(0, result.updatedWallets)
+                assertEquals("", result.lastProcessedTimestamp)
+            }
+            .verifyComplete()
 
         verify(walletBulkRepository, never()).bulkUpdateTtl(any())
     }

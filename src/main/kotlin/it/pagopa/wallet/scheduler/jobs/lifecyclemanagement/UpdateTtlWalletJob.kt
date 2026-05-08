@@ -1,11 +1,15 @@
 package it.pagopa.wallet.scheduler.jobs.lifecyclemanagement
 
+import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.jobs.ScheduledJob
 import it.pagopa.wallet.scheduler.jobs.config.LifecycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.services.LifecycleManagementService
+import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.util.function.component1
+import reactor.kotlin.core.util.function.component2
 
 /**
  * Lifecycle management job: this job will scan all payment wallets without the ttl field and will
@@ -14,6 +18,7 @@ import reactor.core.publisher.Mono
 @Component
 class UpdateTtlWalletJob(
     private val lifecycleManagementService: LifecycleManagementService,
+    private val tracingUtils: TracingUtils
 ) : ScheduledJob<LifecycleManagementJobConfiguration, Int> {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -22,8 +27,32 @@ class UpdateTtlWalletJob(
 
     override fun process(configuration: LifecycleManagementJobConfiguration): Mono<Int> {
         val endDate = configuration.endDate
-        return lifecycleManagementService.setWalletsTtl(endDate).doFirst {
-            logger.info("Starting delete lifecycle wallet processing with end date {} ", endDate)
-        }
+        return lifecycleManagementService
+            .setWalletsTtl(endDate)
+            .doFirst {
+                logger.info(
+                    "Starting delete lifecycle wallet processing with end date {} ",
+                    endDate
+                )
+            }
+            .elapsed()
+            .map { (elapsedMs, setWalletsTtlResult) ->
+                val count = setWalletsTtlResult.updatedWallets
+                val lifecycleSessionStats =
+                    LifeCycleTracerUtils.WalletLifecycleSessionStats(
+                        totalItem = count.toLong(),
+                        elapsedTime = elapsedMs,
+                        lastProcessedTimestamp = setWalletsTtlResult.lastProcessedTimestamp
+                    )
+                tracingUtils.addSpan(
+                    lifecycleSessionStats.WALLET_LIFECYCLE_SESSION_SPAN_NAME,
+                    lifecycleSessionStats.getSpanAttributes(
+                        lifecycleSessionStats.totalItem,
+                        lifecycleSessionStats.elapsedTime,
+                        lifecycleSessionStats.lastProcessedTimestamp
+                    )
+                )
+                count
+            }
     }
 }
