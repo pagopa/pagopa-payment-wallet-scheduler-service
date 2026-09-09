@@ -53,6 +53,7 @@ dependencies {
   testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.20.0")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   // otel api
   implementation("io.opentelemetry:opentelemetry-api:${Dependencies.openTelemetryVersion}")

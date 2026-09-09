@@ -8,6 +8,7 @@ import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import kotlin.test.Test
 import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.test.runTest
 import org.mockito.kotlin.after
 import org.mockito.kotlin.any
 import org.mockito.kotlin.given
@@ -27,7 +28,7 @@ class LifeCycleManagementScheduledJobTest {
         LifeCycleManagementScheduledJob(updateTtlWalletJob, jobConfiguration, schedulerLockService)
 
     @Test
-    fun `Should execute batch successfully`() {
+    fun `Should execute batch successfully`() = runTest {
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
         given(schedulerLockService.acquireJobLock(any(), any())).willReturn(mono { lockDocument })
@@ -46,7 +47,7 @@ class LifeCycleManagementScheduledJobTest {
     }
 
     @Test
-    fun `Should handle process exception during the process`() {
+    fun `Should handle process exception during the process`() = runTest {
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
         given(schedulerLockService.acquireJobLock(any(), any())).willReturn(mono { lockDocument })
@@ -66,7 +67,7 @@ class LifeCycleManagementScheduledJobTest {
     }
 
     @Test
-    fun `Should not call process if the lock is not acquired`() {
+    fun `Should not call process if the lock is not acquired`() = runTest {
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
         given(schedulerLockService.acquireJobLock(any(), any()))
