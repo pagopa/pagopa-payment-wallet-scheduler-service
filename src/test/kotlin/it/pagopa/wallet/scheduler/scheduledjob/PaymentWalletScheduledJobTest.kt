@@ -12,6 +12,7 @@ import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
 import reactor.core.publisher.Mono
 
@@ -96,7 +97,9 @@ class PaymentWalletScheduledJobTest {
         given(schedulerLockService.releaseJobLock(any())).willReturn(null)
 
         // Test
-        paymentWalletScheduledJob.processOnboardedPaymentWallets()
+        assertThrows<LockNotAcquiredException> {
+            paymentWalletScheduledJob.processOnboardedPaymentWallets()
+        }
 
         // verifications
         verify(onboardedPaymentWalletJob, times(1)).id()
