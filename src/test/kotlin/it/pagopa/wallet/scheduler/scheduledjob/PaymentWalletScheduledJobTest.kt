@@ -9,8 +9,10 @@ import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
 import reactor.core.publisher.Mono
 
@@ -29,7 +31,7 @@ class PaymentWalletScheduledJobTest {
         )
 
     @Test
-    fun `Should execute batch successfully`() {
+    fun `Should execute batch successfully`() = runTest {
         // pre-requisites
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
@@ -67,7 +69,9 @@ class PaymentWalletScheduledJobTest {
         given(schedulerLockService.releaseJobLock(any())).willReturn(mono { true })
 
         // Test
-        assertDoesNotThrow { paymentWalletScheduledJob.processOnboardedPaymentWallets() }
+        assertDoesNotThrow {
+            runTest { paymentWalletScheduledJob.processOnboardedPaymentWallets() }
+        }
         // verifications
         verify(onboardedPaymentWalletJob, after(1000).times(1)).id()
         verify(onboardedPaymentWalletJob, after(1000).times(1))
@@ -83,7 +87,7 @@ class PaymentWalletScheduledJobTest {
     }
 
     @Test
-    fun `Should skip batch execution if don't acquire lock`() {
+    fun `Should skip batch execution if don't acquire lock`() = runTest {
         // pre-requisites
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
@@ -93,7 +97,9 @@ class PaymentWalletScheduledJobTest {
         given(schedulerLockService.releaseJobLock(any())).willReturn(null)
 
         // Test
-        paymentWalletScheduledJob.processOnboardedPaymentWallets()
+        assertThrows<LockNotAcquiredException> {
+            paymentWalletScheduledJob.processOnboardedPaymentWallets()
+        }
 
         // verifications
         verify(onboardedPaymentWalletJob, times(1)).id()

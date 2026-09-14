@@ -6,6 +6,7 @@ import it.pagopa.wallet.scheduler.jobs.paymentwallet.OnboardedPaymentWalletJob
 import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
@@ -21,11 +22,12 @@ class PaymentWalletScheduledJob(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(cron = "\${payment-wallet-job.execution.cron}")
-    fun processOnboardedPaymentWallets() {
+    suspend fun processOnboardedPaymentWallets() {
         val startTime = Instant.now()
         val lockTtl = Duration.ofSeconds(paymentWalletJobConfiguration.lockTtlSeconds.toLong())
         schedulerLockService
             .acquireJobLock(onboardedPaymentWalletJob.id(), lockTtl)
+            .timeout(lockTtl)
             .doOnError { logger.error("Unable to start job without acquiring lock", it) }
             .flatMap { lockDocument ->
                 onboardedPaymentWalletJob
@@ -52,6 +54,6 @@ class PaymentWalletScheduledJob(
                     .thenReturn(lockDocument)
             }
             .flatMap { schedulerLockService.releaseJobLock(it) }
-            .subscribe()
+            .awaitSingleOrNull()
     }
 }

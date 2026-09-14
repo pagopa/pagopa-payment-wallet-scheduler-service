@@ -7,6 +7,7 @@ import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -21,11 +22,12 @@ class LifeCycleManagementScheduledJob(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(cron = "\${lifecycle-management-job.execution.cron}")
-    fun processLifeCycleWallets() {
+    suspend fun processLifeCycleWallets() {
         val startTime = Instant.now()
         val lockTtl = Duration.ofSeconds(jobConfiguration.lockTtlSeconds.toLong())
         schedulerLockService
             .acquireJobLock(updateTtlWalletJob.id(), lockTtl)
+            .timeout(lockTtl)
             .doOnError { logger.error("Unable to start job without acquiring lock", it) }
             .flatMap { lockDocument ->
                 updateTtlWalletJob
@@ -48,6 +50,6 @@ class LifeCycleManagementScheduledJob(
                     .thenReturn(lockDocument)
             }
             .flatMap { schedulerLockService.releaseJobLock(it) }
-            .subscribe()
+            .awaitSingleOrNull()
     }
 }

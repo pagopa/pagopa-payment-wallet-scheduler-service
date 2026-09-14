@@ -8,6 +8,8 @@ import it.pagopa.wallet.scheduler.services.SchedulerLockService
 import java.time.Duration
 import kotlin.test.Test
 import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.after
 import org.mockito.kotlin.any
 import org.mockito.kotlin.given
@@ -27,7 +29,7 @@ class LifeCycleManagementScheduledJobTest {
         LifeCycleManagementScheduledJob(updateTtlWalletJob, jobConfiguration, schedulerLockService)
 
     @Test
-    fun `Should execute batch successfully`() {
+    fun `Should execute batch successfully`() = runTest {
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
         given(schedulerLockService.acquireJobLock(any(), any())).willReturn(mono { lockDocument })
@@ -46,7 +48,7 @@ class LifeCycleManagementScheduledJobTest {
     }
 
     @Test
-    fun `Should handle process exception during the process`() {
+    fun `Should handle process exception during the process`() = runTest {
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
         given(schedulerLockService.acquireJobLock(any(), any())).willReturn(mono { lockDocument })
@@ -66,7 +68,7 @@ class LifeCycleManagementScheduledJobTest {
     }
 
     @Test
-    fun `Should not call process if the lock is not acquired`() {
+    fun `Should not call process if the lock is not acquired`() = runTest {
         val jobId = "jobId"
         val lockDocument = ExclusiveLockDocument(jobId, "test")
         given(schedulerLockService.acquireJobLock(any(), any()))
@@ -77,10 +79,12 @@ class LifeCycleManagementScheduledJobTest {
         given(updateTtlWalletJob.id()).willReturn(jobId)
 
         // Test the process
-        lifeCycleManagementScheduledJob.processLifeCycleWallets()
+        assertThrows<LockNotAcquiredException> {
+            lifeCycleManagementScheduledJob.processLifeCycleWallets()
+        }
 
-        verify(updateTtlWalletJob, after(1000).times(1)).id()
-        verify(updateTtlWalletJob, after(1000).times(0)).process(any())
+        verify(updateTtlWalletJob, times(1)).id()
+        verify(updateTtlWalletJob, times(0)).process(any())
 
         verify(schedulerLockService, times(1)).acquireJobLock(jobId, Duration.ofSeconds(30))
         verify(schedulerLockService, times(0)).releaseJobLock(lockDocument)
