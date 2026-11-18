@@ -13,14 +13,18 @@ import reactor.core.publisher.Mono
 class WalletBulkRepository(
     private val reactiveMongoTemplate: ReactiveMongoTemplate,
 ) {
-    fun bulkUpdateTtl(walletTtlMap: Map<String, Int>): Mono<Int> {
+    fun bulkUpdateTtl(walletIds: List<String>, ttlValue: Int): Mono<Int> {
+        if (walletIds.isEmpty()) {
+            return Mono.just(0)
+        }
+
         val bulkOps =
             reactiveMongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Wallet::class.java)
 
-        walletTtlMap.forEach {
+        walletIds.forEach {
             bulkOps.updateOne(
-                Query.query(Criteria.where("_id").`is`(it.key)),
-                Update.update("ttl", it.value)
+                Query.query(Criteria.where("_id").`is`(it)),
+                Update.update("ttl", ttlValue)
             )
         }
 
