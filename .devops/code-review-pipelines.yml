@@ -149,8 +149,8 @@ stages:
               fi
             displayName: 'Check ttl set by lifecycle job'
           - script: |
-              echo "Printing logs for all running containers:"
-              for container in $(docker ps -q); do
+              echo "Printing logs for all containers:"
+              for container in $(docker ps -aq); do
                 name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
                 echo "===== Logs for $name ====="
                 docker logs $container
