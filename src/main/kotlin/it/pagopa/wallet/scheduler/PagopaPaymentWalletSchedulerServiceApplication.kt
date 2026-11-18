@@ -26,7 +26,7 @@ import reactor.core.publisher.Hooks
     PaymentWalletJobConfiguration::class,
     LifecycleManagementExecutionConfig::class,
     LifecycleManagementTtlConfig::class,
-    LifecycleManagementQueryConfig::class
+    LifecycleManagementQueryConfig::class,
     WalletServiceConfigProperties::class
 )
 @EnableScheduling
