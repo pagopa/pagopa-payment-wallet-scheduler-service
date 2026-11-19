@@ -177,6 +177,7 @@ tasks.register<GenerateTask>("walletService") {
   outputDir.set("${layout.buildDirectory.get()}/generated")
   apiPackage.set("it.pagopa.generated.walletservice.api")
   modelPackage.set("it.pagopa.generated.walletservice.model")
+  typeMappings.set(mapOf("number" to "Double"))
   generateApiTests.set(false)
   generateApiDocumentation.set(false)
   generateApiTests.set(false)
