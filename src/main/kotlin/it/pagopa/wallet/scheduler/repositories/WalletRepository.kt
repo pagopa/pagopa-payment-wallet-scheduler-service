@@ -22,13 +22,14 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
     ): Flux<Wallet>
 
     @Aggregation(
-        "{\$match: { 'ttl': null, 'status': {'\$in':?0}, 'updateDate': {'\$lte': '?1'} }}",
+        "{\$match: { 'ttl': null, 'status': {'\$in':?0}, 'updateDate': {'\$lte': '?1'}, '\$or': [{ 'deactivationRetryCount': null }, { 'deactivationRetryCount': {'\$lt': ?2} }] }}",
         "{\$sort: {'updateDate': 1}}",
-        "{\$limit: ?2}",
+        "{\$limit: ?3}",
     )
-    fun findByTtlNullAndStatusInAndUpdateDateBefore(
+    fun findWalletToDelete(
         statuses: Set<String>,
         endDate: String,
+        contractDeactivationMaxRetries: Int,
         limit: Int
     ): Flux<Wallet>
 }
