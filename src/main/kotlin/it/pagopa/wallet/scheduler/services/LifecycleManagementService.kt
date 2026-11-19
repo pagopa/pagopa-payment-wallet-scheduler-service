@@ -125,27 +125,26 @@ class LifecycleManagementService(
             .thenReturn(WalletEvaluation(wallet, updateDate))
             .onErrorResume { ex ->
                 val failedEvaluation = WalletEvaluation(null, updateDate)
-                if (ex is ContractDeactivationBadGatewayException) {
-                    // Explicit 502 received from wallet-service, the NPG contract deactivation API
-                    // failed and the wallet's deactivation retry counter has been incremented
-                    if (
+                if (
+                    ex is ContractDeactivationBadGatewayException &&
                         wallet.deactivationRetryCount ==
                             queryConfig.contractDeactivationMaxRetries - 1
-                    ) {
-                        val dlqDocument =
-                            ContractDeactivationDlqDocument(
-                                id = wallet.id,
-                                timestamp = OffsetDateTime.now().toString()
+                ) {
+                    // Explicit 502 received from wallet-service, the NPG contract deactivation API
+                    // failed and the Wallet's deactivation retry counter has been incremented
+                    val dlqDocument =
+                        ContractDeactivationDlqDocument(
+                            id = wallet.id,
+                            timestamp = OffsetDateTime.now().toString()
+                        )
+                    return@onErrorResume walletContractDeactivationDlqRepository
+                        .save(dlqDocument)
+                        .doOnNext {
+                            logger.info(
+                                "Wallet ${wallet.id} has reached the maximum number of contract deactivation retries. Added to DLQ.",
                             )
-                        return@onErrorResume walletContractDeactivationDlqRepository
-                            .save(dlqDocument)
-                            .doOnNext {
-                                logger.info(
-                                    "Wallet ${wallet.id} has reached the maximum number of contract deactivation retries. Added to DLQ.",
-                                )
-                            }
-                            .thenReturn(failedEvaluation)
-                    }
+                        }
+                        .thenReturn(failedEvaluation)
                 }
                 Mono.just(failedEvaluation)
             }
