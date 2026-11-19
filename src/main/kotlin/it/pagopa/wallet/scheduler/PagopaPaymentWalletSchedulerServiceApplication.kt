@@ -9,6 +9,7 @@ import it.pagopa.wallet.scheduler.config.properties.PaymentWalletJobConfiguratio
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RetrySendPolicyConfig
+import it.pagopa.wallet.scheduler.config.properties.WalletServiceConfigProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -25,7 +26,8 @@ import reactor.core.publisher.Hooks
     PaymentWalletJobConfiguration::class,
     LifecycleManagementExecutionConfig::class,
     LifecycleManagementTtlConfig::class,
-    LifecycleManagementQueryConfig::class
+    LifecycleManagementQueryConfig::class,
+    WalletServiceConfigProperties::class
 )
 @EnableScheduling
 class PagopaPaymentWalletSchedulerServiceApplication
