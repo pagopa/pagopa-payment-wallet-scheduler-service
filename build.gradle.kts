@@ -17,7 +17,7 @@ plugins {
 
 group = "it.pagopa.wallet"
 
-version = "0.16.0"
+version = "0.16.1"
 
 description = "pagopa-payment-wallet-scheduler-service"
 
@@ -171,10 +171,13 @@ tasks.register<GenerateTask>("walletService") {
   description = "Generate wallet-service client interface"
   group = "openapi-generation"
   generatorName.set("java")
-  inputSpec.set("$rootDir/api-client/wallet-service.yml")
+  remoteInputSpec.set(
+    "https://raw.githubusercontent.com/pagopa/pagopa-wallet-service/refs/tags/2.19.2/api-spec/wallet-api.yaml"
+  )
   outputDir.set("${layout.buildDirectory.get()}/generated")
   apiPackage.set("it.pagopa.generated.walletservice.api")
   modelPackage.set("it.pagopa.generated.walletservice.model")
+  typeMappings.set(mapOf("number" to "Double"))
   generateApiTests.set(false)
   generateApiDocumentation.set(false)
   generateApiTests.set(false)

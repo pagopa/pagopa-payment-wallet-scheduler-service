@@ -8,7 +8,6 @@ COPY settings.gradle.kts .
 
 COPY eclipse-style.xml eclipse-style.xml
 COPY src src
-COPY api-client api-client
 RUN ./gradlew build -x test
 RUN mkdir build/extracted && java -Djarmode=layertools -jar build/libs/*.jar extract --destination build/extracted
 
@@ -34,4 +33,4 @@ COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 RUN true
 
 
-ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar", "-XX:-UseBASE64Intrinsics", "-XX:UseAVX=2", "org.springframework.boot.loader.launch.JarLauncher"]
