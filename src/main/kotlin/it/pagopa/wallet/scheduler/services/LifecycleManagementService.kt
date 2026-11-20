@@ -11,6 +11,7 @@ import it.pagopa.wallet.scheduler.repositories.WalletContractDeactivationDlqRepo
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
 import java.time.Instant
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -48,7 +49,10 @@ class LifecycleManagementService(
     private data class WalletEvaluation(val walletToDelete: Wallet?, val updateDate: String)
 
     fun setWalletsTtl(endDate: Instant): Mono<SetWalletsTtlResult> {
-        val queryRate = queryConfig.lifeCycleManagementTimeBasedRate.calculateRate()
+        val batchTime = LocalTime.now()
+        val rateSchedule = queryConfig.lifeCycleManagementTimeBasedRate
+        val queryRate = rateSchedule.calculateRate(batchTime)
+        val invocationDelay = queryConfig.contractDeactivationInvocationDelay(batchTime)
 
         return repository
             .findWalletToDelete(
@@ -59,9 +63,14 @@ class LifecycleManagementService(
             )
             .doFirst {
                 logger.info(
-                    "Searching wallets for lifecycle management. End date [{}] - Limit [{}]",
+                    "Searching wallets for lifecycle management. End date [{}] - Burst window [{} - {}] - Query limits [{} -> {}] - Calculated query limit [{}] - Contract deactivation delay [{} ms]",
                     endDate,
-                    queryRate
+                    rateSchedule.from,
+                    rateSchedule.to,
+                    rateSchedule.lowRate,
+                    rateSchedule.highRate,
+                    queryRate,
+                    invocationDelay.toMillis()
                 )
             }
             .doOnError { logger.error("Wallets search query failed!", it) }
@@ -79,7 +88,7 @@ class LifecycleManagementService(
                 val apiDeletes =
                     shared
                         .filter { it.requiresContractDeactivation() }
-                        .delayElements(queryConfig.contractDeactivationInvocationDelay)
+                        .delayElements(invocationDelay)
                         .flatMap(::deactivateContract)
 
                 Flux.merge(directDeletes, apiDeletes)

@@ -39,11 +39,13 @@ class LifecycleManagementServiceTest {
     private val endDate = Instant.parse("2026-11-19T14:00:00Z")
     private val statuses =
         setOf("CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR", "DELETED", "REPLACED")
+    private val invocationDelay = Duration.ofMillis(500)
     private val queryConfig =
         LifecycleManagementQueryConfig(
             QuerySettings(10, 10, 60, LocalTime.of(10, 0), LocalTime.of(12, 0)),
             contractDeactivationMaxRetries = 3,
-            contractDeactivationMaxRps = 2,
+            contractDeactivationLowRateDelayMs = invocationDelay.toMillis(),
+            contractDeactivationHighRateDelayMs = invocationDelay.toMillis(),
             ttlSeconds = 600
         )
     private val service =
@@ -106,7 +108,7 @@ class LifecycleManagementServiceTest {
             .thenReturn(Mono.just(1))
 
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
-            .thenAwait(queryConfig.contractDeactivationInvocationDelay)
+            .thenAwait(invocationDelay)
             .expectNext(SetWalletsTtlResult(1, wallet.updateDate.toString()))
             .verifyComplete()
 
@@ -138,7 +140,7 @@ class LifecycleManagementServiceTest {
             )
             .thenReturn(Mono.just(2))
 
-        val interval = Duration.ofMillis(500)
+        val interval = invocationDelay
         val tick = Duration.ofMillis(1)
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
             .thenAwait(interval.minus(tick))
@@ -170,7 +172,7 @@ class LifecycleManagementServiceTest {
             .thenReturn(Mono.just(1))
 
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
-            .thenAwait(queryConfig.contractDeactivationInvocationDelay.multipliedBy(2))
+            .thenAwait(invocationDelay.multipliedBy(2))
             .expectNext(SetWalletsTtlResult(1, failed.updateDate.toString()))
             .verifyComplete()
 
@@ -200,7 +202,7 @@ class LifecycleManagementServiceTest {
         stubEmptyTtlUpdate()
 
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
-            .thenAwait(queryConfig.contractDeactivationInvocationDelay)
+            .thenAwait(invocationDelay)
             .expectNext(SetWalletsTtlResult(0, wallet.updateDate.toString()))
             .verifyComplete()
 
@@ -224,7 +226,7 @@ class LifecycleManagementServiceTest {
         val before = Instant.now()
 
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
-            .thenAwait(queryConfig.contractDeactivationInvocationDelay)
+            .thenAwait(invocationDelay)
             .expectNext(SetWalletsTtlResult(0, wallet.updateDate.toString()))
             .verifyComplete()
 
@@ -245,7 +247,7 @@ class LifecycleManagementServiceTest {
             .thenReturn(Mono.error(failure))
 
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
-            .thenAwait(queryConfig.contractDeactivationInvocationDelay)
+            .thenAwait(invocationDelay)
             .expectErrorMatches { it === failure }
             .verify()
 

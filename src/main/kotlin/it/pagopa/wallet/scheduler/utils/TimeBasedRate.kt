@@ -3,8 +3,6 @@ package it.pagopa.wallet.scheduler.utils
 import it.pagopa.wallet.scheduler.config.properties.QuerySettings
 import java.time.Duration
 import java.time.LocalTime
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * This class models a dynamic time based rate calculator utility. The rate will be automatically
@@ -45,8 +43,6 @@ class TimeBasedRate(
     // the total range duration
     val rangeDuration: Duration
 
-    val logger: Logger = LoggerFactory.getLogger(javaClass)
-
     init {
         require(from != to) {
             "Invalid parameters -> from: [$from] and to: [$to]. from and to must be different!"
@@ -78,50 +74,16 @@ class TimeBasedRate(
      * - and here the cycle repeat
      */
     fun calculateRate(at: LocalTime = LocalTime.now()): Int {
-        // case where temporal window is in the same day. ex. 09:00 (d) -> 18:00 (d)
-        val (rangeElapsedTime, isInBurstRange) =
-            if (to > from) {
-                val isInRange = at in from..to
-                val rangeElapsedTime = Duration.between(from, at)
-                Pair(rangeElapsedTime, isInRange)
-            }
-            // case where temporal window cover different two consecutive days ex. 22:00 (d) ->
-            // 05:00 (d+1)
-            // in those cases time window duration and check that now is in range is done checking
-            // negating above conditions
-            else {
-                val isInRange = at !in to..from || at == to || at == from
-                val rangeElapsedTime =
-                    if (at > LocalTime.MIDNIGHT) {
-                            Duration.between(from, LocalTime.MIDNIGHT) +
-                                Duration.between(LocalTime.MIDNIGHT, at)
-                        } else {
-                            Duration.between(from, at)
-                        }
-                        .toPositiveTimeDiff()
-                Pair(rangeElapsedTime, isInRange)
-            }
-        val finalRate: Int =
-            if (isInBurstRange) {
-                if (rangeElapsedTime > rampUp) {
-                    highRate
-                } else {
-                    lowRate +
-                        ((highRate - lowRate) * rangeElapsedTime.seconds / rampUp.seconds).toInt()
-                }
-            } else {
-                lowRate
-            }
-        logger.info(
-            "Dynamic rate configuration: Time window: [{} - {}], ramping up: [{} -> {}]. Calculated rate: [{}]",
-            from,
-            to,
-            lowRate,
-            highRate,
-            finalRate
-        )
-        return finalRate
+        val elapsed = elapsedInBurstWindow(at)
+        return when {
+            elapsed == null -> lowRate
+            elapsed >= rampUp -> highRate
+            else -> lowRate + ((highRate - lowRate) * elapsed.seconds / rampUp.seconds).toInt()
+        }
     }
+
+    internal fun elapsedInBurstWindow(at: LocalTime): Duration? =
+        Duration.between(from, at).toPositiveTimeDiff().takeIf { it <= rangeDuration }
 
     fun Duration.toPositiveTimeDiff(): Duration =
         if (this.isNegative) {
