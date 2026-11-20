@@ -4,7 +4,6 @@ import it.pagopa.wallet.scheduler.config.WalletSearchConfig
 import it.pagopa.wallet.scheduler.config.properties.CdcQueueConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementExecutionConfig
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
-import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementTtlConfig
 import it.pagopa.wallet.scheduler.config.properties.PaymentWalletJobConfiguration
 import it.pagopa.wallet.scheduler.config.properties.RedisJobLockPolicyConfig
 import it.pagopa.wallet.scheduler.config.properties.RedisResumePolicyConfig
@@ -25,7 +24,6 @@ import reactor.core.publisher.Hooks
     RedisJobLockPolicyConfig::class,
     PaymentWalletJobConfiguration::class,
     LifecycleManagementExecutionConfig::class,
-    LifecycleManagementTtlConfig::class,
     LifecycleManagementQueryConfig::class,
     WalletServiceConfigProperties::class
 )

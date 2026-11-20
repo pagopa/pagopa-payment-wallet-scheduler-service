@@ -25,6 +25,7 @@ object WalletTestUtils {
             paymentMethodId = PAYMENT_METHOD_ID.toString(),
             contractId = CONTRACT_ID,
             validationOperationResult = null,
+            validationOperationType = null,
             validationErrorCode = null,
             errorReason = null,
             applications =
@@ -43,7 +44,8 @@ object WalletTestUtils {
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,
             onboardingChannel = ONBOARDING_CHANNEL,
-            ttl = 50
+            ttl = 50,
+            deactivationRetryCount = 0
         )
     }
 
@@ -55,6 +57,7 @@ object WalletTestUtils {
             paymentMethodId = PAYMENT_METHOD_ID.toString(),
             contractId = CONTRACT_ID,
             validationOperationResult = null,
+            validationOperationType = null,
             validationErrorCode = null,
             errorReason = null,
             applications =
@@ -73,7 +76,8 @@ object WalletTestUtils {
             creationDate = CREATION_DATE,
             updateDate = CREATION_DATE,
             onboardingChannel = ONBOARDING_CHANNEL,
-            ttl = 50
+            ttl = 50,
+            deactivationRetryCount = 0
         )
     }
 
