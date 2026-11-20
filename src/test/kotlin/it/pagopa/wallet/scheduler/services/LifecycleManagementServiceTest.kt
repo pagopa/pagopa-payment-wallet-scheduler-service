@@ -40,6 +40,7 @@ class LifecycleManagementServiceTest {
     private val statuses =
         setOf("CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR", "DELETED", "REPLACED")
     private val invocationDelay = Duration.ofMillis(500)
+    private val queryLimit = 12
     private val queryConfig =
         LifecycleManagementQueryConfig(
             QuerySettings(10, 10, 60, LocalTime.of(10, 0), LocalTime.of(12, 0)),
@@ -59,10 +60,10 @@ class LifecycleManagementServiceTest {
         )
 
     @Test
-    fun `should use configured query criteria and skip writes when no wallets are found`() {
+    fun `should use supplied query limit and skip writes when no wallets are found`() {
         stubSearch(Flux.empty())
 
-        StepVerifier.create(service.setWalletsTtl(endDate))
+        StepVerifier.create(service.setWalletsTtl(endDate, queryLimit, invocationDelay))
             .expectNext(SetWalletsTtlResult(0, ""))
             .verifyComplete()
 
@@ -71,7 +72,7 @@ class LifecycleManagementServiceTest {
                 statuses,
                 endDate.toString(),
                 queryConfig.contractDeactivationMaxRetries,
-                10
+                queryLimit
             )
         verifyNoInteractions(walletServiceClient, walletBulkRepository, dlqRepository, tracingUtils)
     }
@@ -107,7 +108,7 @@ class LifecycleManagementServiceTest {
         whenever(walletBulkRepository.bulkUpdateTtl(listOf(wallet.id), queryConfig.ttlSeconds))
             .thenReturn(Mono.just(1))
 
-        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
             .thenAwait(invocationDelay)
             .expectNext(SetWalletsTtlResult(1, wallet.updateDate.toString()))
             .verifyComplete()
@@ -142,7 +143,7 @@ class LifecycleManagementServiceTest {
 
         val interval = invocationDelay
         val tick = Duration.ofMillis(1)
-        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
             .thenAwait(interval.minus(tick))
             .then { verifyNoInteractions(walletServiceClient) }
             .thenAwait(tick)
@@ -171,7 +172,7 @@ class LifecycleManagementServiceTest {
         whenever(walletBulkRepository.bulkUpdateTtl(any(), eq(queryConfig.ttlSeconds)))
             .thenReturn(Mono.just(1))
 
-        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
             .thenAwait(invocationDelay.multipliedBy(2))
             .expectNext(SetWalletsTtlResult(1, failed.updateDate.toString()))
             .verifyComplete()
@@ -201,7 +202,7 @@ class LifecycleManagementServiceTest {
         whenever(walletServiceClient.deactivateContract(wallet.id)).thenReturn(Mono.error(failure))
         stubEmptyTtlUpdate()
 
-        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
             .thenAwait(invocationDelay)
             .expectNext(SetWalletsTtlResult(0, wallet.updateDate.toString()))
             .verifyComplete()
@@ -225,7 +226,7 @@ class LifecycleManagementServiceTest {
             }
         val before = Instant.now()
 
-        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
             .thenAwait(invocationDelay)
             .expectNext(SetWalletsTtlResult(0, wallet.updateDate.toString()))
             .verifyComplete()
@@ -246,7 +247,7 @@ class LifecycleManagementServiceTest {
         whenever(dlqRepository.save(any<ContractDeactivationDlqDocument>()))
             .thenReturn(Mono.error(failure))
 
-        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate) }
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
             .thenAwait(invocationDelay)
             .expectErrorMatches { it === failure }
             .verify()
@@ -259,7 +260,7 @@ class LifecycleManagementServiceTest {
         val failure = IllegalStateException("Wallet search failed")
         stubSearch(Flux.error(failure))
 
-        StepVerifier.create(service.setWalletsTtl(endDate))
+        StepVerifier.create(service.setWalletsTtl(endDate, queryLimit, invocationDelay))
             .expectErrorMatches { it === failure }
             .verify()
 
@@ -274,7 +275,7 @@ class LifecycleManagementServiceTest {
         whenever(walletBulkRepository.bulkUpdateTtl(listOf(wallet.id), queryConfig.ttlSeconds))
             .thenReturn(Mono.error(failure))
 
-        StepVerifier.create(service.setWalletsTtl(endDate))
+        StepVerifier.create(service.setWalletsTtl(endDate, queryLimit, invocationDelay))
             .expectErrorMatches { it === failure }
             .verify()
 

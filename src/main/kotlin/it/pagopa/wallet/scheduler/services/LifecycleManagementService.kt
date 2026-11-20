@@ -10,8 +10,8 @@ import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletContractDeactivationDlqRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
 import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
+import java.time.Duration
 import java.time.Instant
-import java.time.LocalTime
 import java.time.OffsetDateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -48,31 +48,18 @@ class LifecycleManagementService(
 
     private data class WalletEvaluation(val walletToDelete: Wallet?, val updateDate: String)
 
-    fun setWalletsTtl(endDate: Instant): Mono<SetWalletsTtlResult> {
-        val batchTime = LocalTime.now()
-        val rateSchedule = queryConfig.lifeCycleManagementTimeBasedRate
-        val queryRate = rateSchedule.calculateRate(batchTime)
-        val invocationDelay = queryConfig.contractDeactivationInvocationDelay(batchTime)
-
+    fun setWalletsTtl(
+        endDate: Instant,
+        queryLimit: Int,
+        invocationDelay: Duration
+    ): Mono<SetWalletsTtlResult> {
         return repository
             .findWalletToDelete(
                 ALLOWED_STATUSES,
                 endDate.toString(),
                 queryConfig.contractDeactivationMaxRetries,
-                queryRate
+                queryLimit
             )
-            .doFirst {
-                logger.info(
-                    "Searching wallets for lifecycle management. End date [{}] - Burst window [{} - {}] - Query limits [{} -> {}] - Calculated query limit [{}] - Contract deactivation delay [{} ms]",
-                    endDate,
-                    rateSchedule.from,
-                    rateSchedule.to,
-                    rateSchedule.lowRate,
-                    rateSchedule.highRate,
-                    queryRate,
-                    invocationDelay.toMillis()
-                )
-            }
             .doOnError { logger.error("Wallets search query failed!", it) }
             .publish { shared ->
                 val directDeletes =
