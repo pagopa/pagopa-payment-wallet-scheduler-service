@@ -1,0 +1,49 @@
+{
+  "deactivationSucceeds": {
+    "id": "73c00000-0000-4000-8000-000000000004",
+    "wallet": {
+      "status": "REPLACED",
+      "validationOperationType": "CARD_VERIFICATION",
+      "validationOperationResult": "AUTHORIZED"
+    },
+    "mockStatus": 204,
+    "expected": { "ttl": 5, "deactivationRequested": true, "dlq": false }
+  },
+  "noContract": {
+    "id": "73c00000-0000-4000-8000-000000000001",
+    "wallet": { "status": "CREATED", "contractId": null },
+    "expected": { "ttl": 5, "deactivationRequested": false, "dlq": false }
+  },
+  "validatedWallet": {
+    "id": "73c00000-0000-4000-8000-000000000007",
+    "wallet": { "status": "VALIDATED", "creationDate": "1960-01-01T00:00:00Z" },
+    "expected": { "ttl": null, "deactivationRequested": false, "dlq": false }
+  },
+  "newerThanCutoff": {
+    "id": "73c00000-0000-4000-8000-000000000008",
+    "recentUpdate": true,
+    "expected": { "ttl": null, "deactivationRequested": false, "dlq": false }
+  },
+  "existingTtl": {
+    "id": "73c00000-0000-4000-8000-000000000009",
+    "wallet": { "ttl": 1800 },
+    "expected": { "ttl": 1800, "deactivationRequested": false, "dlq": false }
+  },
+  "retryLimitReached": {
+    "id": "73c00000-0000-4000-8000-000000000010",
+    "wallet": { "deactivationRetryCount": 2 },
+    "expected": { "ttl": null, "deactivationRequested": false, "dlq": false }
+  },
+  "badGatewayOnLastAttempt": {
+    "id": "73c00000-0000-4000-8000-000000000011",
+    "wallet": { "deactivationRetryCount": 1 },
+    "mockStatus": 502,
+    "expected": { "ttl": null, "deactivationRequested": true, "dlq": true }
+  },
+  "serverErrorOnLastAttempt": {
+    "id": "73c00000-0000-4000-8000-000000000013",
+    "wallet": { "deactivationRetryCount": 1 },
+    "mockStatus": 500,
+    "expected": { "ttl": null, "deactivationRequested": true, "dlq": false }
+  }
+}
