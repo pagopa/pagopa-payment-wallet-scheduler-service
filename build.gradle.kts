@@ -1,3 +1,7 @@
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 plugins {
   kotlin("jvm") version "2.2.0"
   kotlin("plugin.spring") version "2.2.0"
@@ -6,6 +10,7 @@ plugins {
   id("com.diffplug.spotless") version "6.25.0"
   id("org.sonarqube") version "6.2.0.5505"
   id("com.dipien.semantic-version") version "2.0.0" apply false
+  id("org.openapi.generator") version "7.25.0"
   jacoco
   application
 }
@@ -83,6 +88,16 @@ configurations {
 
 kotlin { compilerOptions { freeCompilerArgs.addAll("-Xjsr305=strict") } }
 
+sourceSets {
+  main {
+    java { srcDirs("${layout.buildDirectory.get()}/generated/src/main/java") }
+    kotlin {
+      srcDirs("src/main/kotlin", "${layout.buildDirectory.get()}/generated/src/main/kotlin")
+    }
+    resources { srcDirs("src/resources") }
+  }
+}
+
 springBoot {
   mainClass.set("it.pagopa.wallet.scheduler.PagopaPaymentWalletSchedulerServiceApplicationKt")
   buildInfo {
@@ -151,3 +166,38 @@ tasks.jacocoTestReport {
  * and version
  */
 tasks.processResources { filesMatching("application.properties") { expand(project.properties) } }
+
+tasks.register<GenerateTask>("walletService") {
+  description = "Generate wallet-service client interface"
+  group = "openapi-generation"
+  generatorName.set("java")
+  remoteInputSpec.set(
+    "https://raw.githubusercontent.com/pagopa/pagopa-wallet-service/refs/tags/2.19.2/api-spec/wallet-api.yaml"
+  )
+  outputDir.set("${layout.buildDirectory.get()}/generated")
+  apiPackage.set("it.pagopa.generated.walletservice.api")
+  modelPackage.set("it.pagopa.generated.walletservice.model")
+  typeMappings.set(mapOf("number" to "Double"))
+  generateApiTests.set(false)
+  generateApiDocumentation.set(false)
+  generateApiTests.set(false)
+  generateModelTests.set(false)
+  library.set("webclient")
+  configOptions.set(
+    mapOf(
+      "swaggerAnnotations" to "false",
+      "openApiNullable" to "false",
+      "interfaceOnly" to "true",
+      "hideGenerationTimestamp" to "true",
+      "skipDefaultInterface" to "true",
+      "useSwaggerUI" to "false",
+      "reactive" to "true",
+      "useSpringBoot3" to "true",
+      "oas3" to "true",
+      "generateSupportingFiles" to "true",
+      "useJakartaEe" to "true"
+    )
+  )
+}
+
+tasks.withType<KotlinCompile> { dependsOn("walletService") }
