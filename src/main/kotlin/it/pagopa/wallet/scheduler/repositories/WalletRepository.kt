@@ -1,5 +1,6 @@
 package it.pagopa.wallet.scheduler.repositories
 
+import it.pagopa.generated.walletservice.model.WalletStatus
 import it.pagopa.wallet.documents.wallets.Wallet
 import org.springframework.data.mongodb.repository.Aggregation
 import org.springframework.data.mongodb.repository.Query
@@ -30,7 +31,7 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
         "{\$limit: ?3}",
     )
     fun findWalletToDelete(
-        statuses: Set<String>,
+        statuses: Set<WalletStatus>,
         endDate: String,
         contractDeactivationMaxRetries: Int,
         limit: Int

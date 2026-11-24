@@ -1,5 +1,6 @@
 package it.pagopa.wallet.scheduler.services
 
+import it.pagopa.generated.walletservice.model.WalletStatus
 import it.pagopa.wallet.documents.wallets.ContractDeactivationDlqDocument
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.client.WalletServiceClient
@@ -30,15 +31,8 @@ class LifecycleManagementService(
     private val tracingUtils: TracingUtils
 ) {
     companion object {
-        private val ALLOWED_STATUSES =
-            setOf(
-                "CREATED",
-                "INITIALIZED",
-                "VALIDATION_REQUESTED",
-                "ERROR",
-                "DELETED",
-                "REPLACED"
-            ) // All possible statuses except for "VALIDATED"
+        // All possible statuses except for "VALIDATED"
+        private val ALLOWED_STATUSES = WalletStatus.entries.toSet().minus(WalletStatus.VALIDATED)
     }
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)

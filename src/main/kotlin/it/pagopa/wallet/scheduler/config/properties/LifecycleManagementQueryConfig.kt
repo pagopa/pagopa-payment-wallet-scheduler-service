@@ -18,6 +18,9 @@ data class LifecycleManagementQueryConfig(
     private val highRateDelay = Duration.ofMillis(contractDeactivationHighRateDelayMs)
 
     init {
+        require(contractDeactivationMaxRetries > 0) {
+            "The contract deactivation retry limit must be greater than zero"
+        }
         require(ttlSeconds > 0) { "TTL seconds must be greater than zero" }
         require(contractDeactivationHighRateDelayMs > 0) {
             "The high-rate contract deactivation delay must be positive"
