@@ -31,15 +31,11 @@ data class LifecycleManagementQueryConfig(
     }
 
     fun contractDeactivationInvocationDelay(at: LocalTime): Duration {
-        val elapsed =
-            lifeCycleManagementTimeBasedRate.elapsedInBurstWindow(at) ?: return lowRateDelay
-        val rampUp = lifeCycleManagementTimeBasedRate.rampUp
-        if (elapsed >= rampUp) return highRateDelay
-
-        val delayReduction = lowRateDelay.minus(highRateDelay)
-        return lowRateDelay.minus(
-            delayReduction.multipliedBy(elapsed.seconds).dividedBy(rampUp.seconds)
-        )
+        return if (lifeCycleManagementTimeBasedRate.elapsedInBurstWindow(at) != null) {
+            highRateDelay
+        } else {
+            lowRateDelay
+        }
     }
 }
 

@@ -2,6 +2,7 @@ package it.pagopa.wallet.scheduler.services
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import it.pagopa.generated.walletservice.model.WalletStatus
 import it.pagopa.wallet.documents.wallets.ContractDeactivationDlqDocument
 import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.WalletTestUtils
@@ -35,8 +36,7 @@ class LifecycleManagementServiceTest {
     private val walletServiceClient: WalletServiceClient = mock()
     private val tracingUtils: TracingUtils = mock()
     private val endDate = Instant.parse("2026-11-19T14:00:00Z")
-    private val statuses =
-        setOf("CREATED", "INITIALIZED", "VALIDATION_REQUESTED", "ERROR", "DELETED", "REPLACED")
+    private val statuses = WalletStatus.entries.toSet().minus(WalletStatus.VALIDATED)
     private val invocationDelay = Duration.ofMillis(500)
     private val queryLimit = 12
     private val queryConfig =
