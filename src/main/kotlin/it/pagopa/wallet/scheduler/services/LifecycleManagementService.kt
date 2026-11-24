@@ -118,20 +118,23 @@ class LifecycleManagementService(
 
     private fun recordDeactivationFailure(wallet: Wallet): Mono<Void> {
         val attemptNumber = (wallet.deactivationRetryCount ?: 0) + 1
-        val maxRetries = queryConfig.contractDeactivationMaxRetries
-        return repository
-            .updateDeactivationRetryCount(wallet.id, wallet.version, attemptNumber)
-            .doOnError {
-                logger.error(
-                    "Could not update deactivation retry count for wallet ${wallet.id}",
-                    it
-                )
+        val dlqWrite =
+            if (attemptNumber == queryConfig.contractDeactivationMaxRetries)
+                saveDeactivationDlqEntry(wallet.id)
+            else Mono.empty()
+        return dlqWrite.then(
+            Mono.defer {
+                repository
+                    .updateDeactivationRetryCount(wallet.id, wallet.version, attemptNumber)
+                    .doOnError {
+                        logger.error(
+                            "Could not update deactivation retry count for wallet ${wallet.id}",
+                            it
+                        )
+                    }
+                    .then()
             }
-            .flatMap { updatedCount ->
-                if (updatedCount > 0L && attemptNumber == maxRetries)
-                    saveDeactivationDlqEntry(wallet.id)
-                else Mono.empty()
-            }
+        )
     }
 
     private fun saveDeactivationDlqEntry(walletId: String): Mono<Void> =
