@@ -5,7 +5,6 @@ import it.pagopa.wallet.documents.wallets.Wallet
 import it.pagopa.wallet.scheduler.client.WalletServiceClient
 import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
-import it.pagopa.wallet.scheduler.exceptions.ContractDeactivationBadGatewayException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletContractDeactivationDlqRepository
 import it.pagopa.wallet.scheduler.repositories.WalletRepository
@@ -116,35 +115,41 @@ class LifecycleManagementService(
 
     private fun deactivateContract(wallet: Wallet): Mono<WalletEvaluation> {
         val updateDate = wallet.updateDate.toString()
-        return walletServiceClient
-            .deactivateContract(wallet.id)
+        return Mono.defer { walletServiceClient.deactivateContract(wallet.id) }
             .thenReturn(WalletEvaluation(wallet, updateDate))
-            .onErrorResume { ex ->
-                val failedEvaluation = WalletEvaluation(null, updateDate)
-                if (
-                    ex is ContractDeactivationBadGatewayException &&
-                        wallet.deactivationRetryCount ==
-                            queryConfig.contractDeactivationMaxRetries - 1
-                ) {
-                    // Explicit 502 received from wallet-service, the NPG contract deactivation API
-                    // failed and the Wallet's deactivation retry counter has been incremented
-                    val dlqDocument =
-                        ContractDeactivationDlqDocument(
-                            id = wallet.id,
-                            timestamp = OffsetDateTime.now().toString()
-                        )
-                    return@onErrorResume walletContractDeactivationDlqRepository
-                        .save(dlqDocument)
-                        .doOnNext {
-                            logger.info(
-                                "Wallet ${wallet.id} has reached the maximum number of contract deactivation retries. Added to DLQ.",
-                            )
-                        }
-                        .thenReturn(failedEvaluation)
-                }
-                Mono.just(failedEvaluation)
+            .onErrorResume {
+                recordDeactivationFailure(wallet).thenReturn(WalletEvaluation(null, updateDate))
             }
     }
+
+    private fun recordDeactivationFailure(wallet: Wallet): Mono<Void> {
+        val attemptNumber = (wallet.deactivationRetryCount ?: 0) + 1
+        val maxRetries = queryConfig.contractDeactivationMaxRetries
+        return repository
+            .updateDeactivationRetryCount(wallet.id, wallet.version, attemptNumber)
+            .doOnError {
+                logger.error(
+                    "Could not update deactivation retry count for wallet ${wallet.id}",
+                    it
+                )
+            }
+            .flatMap { updatedCount ->
+                if (updatedCount > 0L && attemptNumber == maxRetries)
+                    saveDeactivationDlqEntry(wallet.id)
+                else Mono.empty()
+            }
+    }
+
+    private fun saveDeactivationDlqEntry(walletId: String): Mono<Void> =
+        walletContractDeactivationDlqRepository
+            .save(ContractDeactivationDlqDocument(walletId, OffsetDateTime.now().toString()))
+            .doOnNext {
+                logger.info(
+                    "Wallet $walletId reached the deactivation retry limit and was added to the DLQ"
+                )
+            }
+            .doOnError { logger.error("Could not write DLQ entry for wallet $walletId", it) }
+            .then()
 
     private fun Wallet.requiresContractDeactivation(): Boolean =
         contractId != null &&

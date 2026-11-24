@@ -1,21 +1,16 @@
 package it.pagopa.wallet.scheduler.client
 
 import it.pagopa.generated.walletservice.api.WalletsApi
-import it.pagopa.wallet.scheduler.exceptions.ContractDeactivationBadGatewayException
 import it.pagopa.wallet.scheduler.exceptions.WalletServiceException
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.http.HttpHeaders
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 
@@ -48,26 +43,6 @@ class WalletServiceClientTest {
                 val walletServiceException = assertIs<WalletServiceException>(error)
                 assertEquals("Wallet service exception for walletId [$walletId]", error.message)
                 assertSame(cause, walletServiceException.cause)
-            }
-            .verify()
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = [502, 500])
-    fun `Should map only HTTP 502 to the contract deactivation bad gateway exception`(status: Int) {
-        val walletId = UUID.randomUUID()
-        val cause =
-            WebClientResponseException.create(status, "", HttpHeaders.EMPTY, byteArrayOf(), null)
-        val expectedType =
-            if (status == 502) ContractDeactivationBadGatewayException::class
-            else WalletServiceException::class
-        whenever(walletServiceWebClient.deactivateContractByWalletId(eq(walletId)))
-            .thenReturn(Mono.error(cause))
-
-        StepVerifier.create(walletServiceClient.deactivateContract(walletId.toString()))
-            .expectErrorSatisfies { error ->
-                assertEquals(expectedType, error::class)
-                assertSame(cause, error.cause)
             }
             .verify()
     }

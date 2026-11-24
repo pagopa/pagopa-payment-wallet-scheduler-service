@@ -9,7 +9,6 @@ import it.pagopa.wallet.scheduler.client.WalletServiceClient
 import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
 import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
 import it.pagopa.wallet.scheduler.config.properties.QuerySettings
-import it.pagopa.wallet.scheduler.exceptions.ContractDeactivationBadGatewayException
 import it.pagopa.wallet.scheduler.exceptions.WalletServiceException
 import it.pagopa.wallet.scheduler.repositories.WalletBulkRepository
 import it.pagopa.wallet.scheduler.repositories.WalletContractDeactivationDlqRepository
@@ -18,7 +17,6 @@ import it.pagopa.wallet.scheduler.services.LifecycleManagementService.SetWallets
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
-import java.time.OffsetDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
@@ -123,6 +121,7 @@ class LifecycleManagementServiceTest {
             verifyNoInteractions(walletServiceClient)
             verify(walletBulkRepository).bulkUpdateTtl(listOf(wallet.id), queryConfig.ttlSeconds)
         }
+        verify(walletRepository, never()).updateDeactivationRetryCount(any(), any(), any())
         verifyNoInteractions(dlqRepository)
     }
 
@@ -169,6 +168,8 @@ class LifecycleManagementServiceTest {
         stubSearch(Flux.just(deactivated, failed, direct))
         whenever(walletServiceClient.deactivateContract(deactivated.id)).thenReturn(Mono.empty())
         whenever(walletServiceClient.deactivateContract(failed.id)).thenReturn(Mono.error(failure))
+        whenever(walletRepository.updateDeactivationRetryCount(failed.id, failed.version, 1))
+            .thenReturn(Mono.just(1L))
         whenever(walletBulkRepository.bulkUpdateTtl(any(), eq(queryConfig.ttlSeconds)))
             .thenReturn(Mono.just(1))
 
@@ -188,18 +189,25 @@ class LifecycleManagementServiceTest {
     }
 
     @ParameterizedTest
-    @CsvSource("true, ", "true, 0", "true, 1", "true, 3", "false, 2")
-    fun `should skip TTL and DLQ writes when a failed deactivation does not exhaust retries`(
-        badGateway: Boolean,
-        retryCount: Int?
+    @CsvSource(", 1", "0, 1", "1, 2")
+    fun `should persist the next attempt without TTL or DLQ below the retry limit`(
+        retryCount: Int?,
+        nextAttempt: Int
     ) {
         val wallet = wallet().copy(deactivationRetryCount = retryCount)
         val cause = IllegalStateException("Deactivation failed")
-        val failure =
-            if (badGateway) ContractDeactivationBadGatewayException(wallet.id, cause)
-            else WalletServiceException(wallet.id, cause)
+        val failure = WalletServiceException(wallet.id, cause)
+        val update = PublisherProbe.of(Mono.just(1L))
         stubSearch(Flux.just(wallet))
         whenever(walletServiceClient.deactivateContract(wallet.id)).thenReturn(Mono.error(failure))
+        whenever(
+                walletRepository.updateDeactivationRetryCount(
+                    wallet.id,
+                    wallet.version,
+                    nextAttempt
+                )
+            )
+            .thenReturn(update.mono())
         stubEmptyTtlUpdate()
 
         StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
@@ -207,15 +215,19 @@ class LifecycleManagementServiceTest {
             .expectNext(SetWalletsTtlResult(0, wallet.updateDate.toString()))
             .verifyComplete()
 
+        update.assertWasSubscribed()
         verify(walletBulkRepository).bulkUpdateTtl(emptyList(), queryConfig.ttlSeconds)
         verifyNoInteractions(dlqRepository, tracingUtils)
     }
 
     @Test
-    fun `should save the wallet in the DLQ before finishing when bad gateway exhausts retries`() {
+    fun `should persist the last attempt before saving the wallet in the DLQ`() {
         val wallet = stubLastRetryFailure()
+        val update = PublisherProbe.of(Mono.just(1L))
+        stubLastRetryUpdate(wallet, update.mono())
         val save = PublisherProbe.empty<ContractDeactivationDlqDocument>()
         whenever(dlqRepository.save(any<ContractDeactivationDlqDocument>())).thenAnswer {
+            update.assertWasSubscribed()
             val document = it.getArgument<ContractDeactivationDlqDocument>(0)
             save.mono().thenReturn(document)
         }
@@ -234,15 +246,45 @@ class LifecycleManagementServiceTest {
         val document = argumentCaptor<ContractDeactivationDlqDocument>()
         verify(dlqRepository).save(document.capture())
         assertEquals(wallet.id, document.firstValue.id)
-        val timestamp = OffsetDateTime.parse(document.firstValue.timestamp).toInstant()
+        val timestamp = Instant.parse(document.firstValue.timestamp)
         assertTrue(timestamp in before..Instant.now())
         verify(walletBulkRepository).bulkUpdateTtl(emptyList(), queryConfig.ttlSeconds)
         verifyNoInteractions(tracingUtils)
     }
 
     @Test
+    fun `should skip DLQ and TTL when the last retry update loses a version race`() {
+        val wallet = stubLastRetryFailure()
+        stubLastRetryUpdate(wallet, Mono.just(0L))
+        stubEmptyTtlUpdate()
+
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
+            .thenAwait(invocationDelay)
+            .expectNext(SetWalletsTtlResult(0, wallet.updateDate.toString()))
+            .verifyComplete()
+
+        verify(walletBulkRepository).bulkUpdateTtl(emptyList(), queryConfig.ttlSeconds)
+        verifyNoInteractions(dlqRepository, tracingUtils)
+    }
+
+    @Test
+    fun `should propagate a retry update failure without writing DLQ or TTL`() {
+        val wallet = stubLastRetryFailure()
+        val failure = IllegalStateException("Retry update failed")
+        stubLastRetryUpdate(wallet, Mono.error(failure))
+
+        StepVerifier.withVirtualTime { service.setWalletsTtl(endDate, queryLimit, invocationDelay) }
+            .thenAwait(invocationDelay)
+            .expectErrorMatches { it === failure }
+            .verify()
+
+        verifyNoInteractions(dlqRepository, walletBulkRepository, tracingUtils)
+    }
+
+    @Test
     fun `should propagate a DLQ save failure without applying TTL`() {
-        stubLastRetryFailure()
+        val wallet = stubLastRetryFailure()
+        stubLastRetryUpdate(wallet, Mono.just(1L))
         val failure = IllegalStateException("DLQ write failed")
         whenever(dlqRepository.save(any<ContractDeactivationDlqDocument>()))
             .thenReturn(Mono.error(failure))
@@ -300,10 +342,21 @@ class LifecycleManagementServiceTest {
         val wallet =
             wallet().copy(deactivationRetryCount = queryConfig.contractDeactivationMaxRetries - 1)
         val failure =
-            ContractDeactivationBadGatewayException(wallet.id, IllegalStateException("Bad gateway"))
+            WalletServiceException(wallet.id, IllegalStateException("Wallet service unavailable"))
         stubSearch(Flux.just(wallet))
         whenever(walletServiceClient.deactivateContract(wallet.id)).thenReturn(Mono.error(failure))
         return wallet
+    }
+
+    private fun stubLastRetryUpdate(wallet: Wallet, result: Mono<Long>) {
+        whenever(
+                walletRepository.updateDeactivationRetryCount(
+                    wallet.id,
+                    wallet.version,
+                    queryConfig.contractDeactivationMaxRetries
+                )
+            )
+            .thenReturn(result)
     }
 
     private fun expectedAttributes(wallet: Wallet): Attributes =

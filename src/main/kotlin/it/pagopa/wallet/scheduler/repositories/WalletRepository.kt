@@ -2,9 +2,12 @@ package it.pagopa.wallet.scheduler.repositories
 
 import it.pagopa.wallet.documents.wallets.Wallet
 import org.springframework.data.mongodb.repository.Aggregation
+import org.springframework.data.mongodb.repository.Query
+import org.springframework.data.mongodb.repository.Update
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 @Repository
 interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
@@ -32,4 +35,9 @@ interface WalletRepository : ReactiveCrudRepository<Wallet, String> {
         contractDeactivationMaxRetries: Int,
         limit: Int
     ): Flux<Wallet>
+
+    /** Updates retry counter without triggering last-modified auditing. */
+    @Query("{ '_id': ?0, 'version': ?1 }")
+    @Update("{ '\$set': { 'deactivationRetryCount': ?2 }, '\$inc': { 'version': 1 } }")
+    fun updateDeactivationRetryCount(id: String, version: Int, retryCount: Int): Mono<Long>
 }

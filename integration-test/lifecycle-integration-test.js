@@ -6,7 +6,7 @@ const lifecycleFixtures = require("/fixtures/lifecycle-fixtures.json");
 
 function checkFixtures() {
     const errors = [];
-    for (const [scenario, { id, wallet: seed, expected }] of Object.entries(lifecycleFixtures)) {
+    for (const [scenario, { id, expected }] of Object.entries(lifecycleFixtures)) {
         const label = `${scenario} (${id})`;
         const wallet = wallets.findOne({ _id: id });
         if (!wallet) {
@@ -15,6 +15,10 @@ function checkFixtures() {
         }
         if ((wallet.ttl ?? null) !== expected.ttl) {
             errors.push(`${label}: expected TTL ${expected.ttl}, got ${wallet.ttl}`);
+        }
+        if (expected.deactivationRetryCount !== undefined &&
+            wallet.deactivationRetryCount !== expected.deactivationRetryCount) {
+            errors.push(`${label}: expected retry count ${expected.deactivationRetryCount}, got ${wallet.deactivationRetryCount}`);
         }
         const entry = dlq.findOne({ _id: id });
         if (expected.dlq) {

@@ -34,16 +34,10 @@
     "wallet": { "deactivationRetryCount": 2 },
     "expected": { "ttl": null, "deactivationRequested": false, "dlq": false }
   },
-  "badGatewayOnLastAttempt": {
-    "id": "73c00000-0000-4000-8000-000000000011",
-    "wallet": { "deactivationRetryCount": 1 },
-    "mockStatus": 502,
-    "expected": { "ttl": null, "deactivationRequested": true, "dlq": true }
-  },
   "serverErrorOnLastAttempt": {
     "id": "73c00000-0000-4000-8000-000000000013",
     "wallet": { "deactivationRetryCount": 1 },
     "mockStatus": 500,
-    "expected": { "ttl": null, "deactivationRequested": true, "dlq": false }
+    "expected": { "ttl": null, "deactivationRequested": true, "dlq": true, "deactivationRetryCount": 2 }
   }
 }
