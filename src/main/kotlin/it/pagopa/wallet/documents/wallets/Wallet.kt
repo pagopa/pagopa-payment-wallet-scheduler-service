@@ -13,6 +13,7 @@ data class Wallet(
     val paymentMethodId: String,
     val contractId: String?,
     val validationOperationResult: String?,
+    val validationOperationType: String?,
     val validationErrorCode: String?,
     val errorReason: String?,
     val applications: List<WalletApplication>,
@@ -22,5 +23,6 @@ data class Wallet(
     val creationDate: Instant,
     val updateDate: Instant,
     val onboardingChannel: String,
-    val ttl: Int?
+    val ttl: Int?,
+    val deactivationRetryCount: Int?
 )

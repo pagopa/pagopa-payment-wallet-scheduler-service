@@ -2,13 +2,16 @@ package it.pagopa.wallet.scheduler.jobs.lifecyclemanagement
 
 import io.opentelemetry.api.common.Attributes
 import it.pagopa.wallet.scheduler.common.tracing.TracingUtils
+import it.pagopa.wallet.scheduler.config.properties.LifecycleManagementQueryConfig
+import it.pagopa.wallet.scheduler.config.properties.QuerySettings
 import it.pagopa.wallet.scheduler.jobs.config.LifecycleManagementJobConfiguration
 import it.pagopa.wallet.scheduler.services.LifecycleManagementService
 import it.pagopa.wallet.scheduler.utils.LifeCycleTracerUtils
+import java.time.Duration
 import java.time.Instant
+import java.time.LocalTime
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doNothing
@@ -25,7 +28,16 @@ class UpdateTtlWalletJobTest {
     private val lifecycleManagementService: LifecycleManagementService = mock()
     private val tracingUtils: TracingUtils = mock()
 
-    private val updateTtlWalletJob = UpdateTtlWalletJob(lifecycleManagementService, tracingUtils)
+    private val queryConfig =
+        LifecycleManagementQueryConfig(
+            QuerySettings(10, 10, 60, LocalTime.of(10, 0), LocalTime.of(12, 0)),
+            contractDeactivationMaxRetries = 3,
+            contractDeactivationLowRateDelayMs = 750,
+            contractDeactivationHighRateDelayMs = 750,
+            ttlSeconds = 600
+        )
+    private val updateTtlWalletJob =
+        UpdateTtlWalletJob(lifecycleManagementService, queryConfig, tracingUtils)
 
     @Test
     fun `Should execute process successfully`() {
@@ -33,8 +45,9 @@ class UpdateTtlWalletJobTest {
         val endDate = Instant.now()
         val lastProcessedTimestamp = endDate.toString()
         val lifecycleManagementJobConfiguration = LifecycleManagementJobConfiguration(endDate)
+        val invocationDelay = Duration.ofMillis(750)
 
-        given(lifecycleManagementService.setWalletsTtl(any()))
+        given(lifecycleManagementService.setWalletsTtl(endDate, 10, invocationDelay))
             .willReturn(
                 Mono.just(
                     LifecycleManagementService.SetWalletsTtlResult(
@@ -51,7 +64,7 @@ class UpdateTtlWalletJobTest {
             .verifyComplete()
 
         // verifications
-        verify(lifecycleManagementService, times(1)).setWalletsTtl(endDate)
+        verify(lifecycleManagementService).setWalletsTtl(endDate, 10, invocationDelay)
         val attributesCaptor = argumentCaptor<Attributes>()
         verify(tracingUtils, times(1))
             .addSpan(eq("payWalletLifeCycleSession"), attributesCaptor.capture())

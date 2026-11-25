@@ -21,11 +21,12 @@ class WalletServiceClient(
     fun deactivateContract(walletId: String): Mono<Void> {
         return walletServiceWebClient
             .deactivateContractByWalletId(UUID.fromString(walletId))
-            .doOnError(WebClientResponseException::class.java) {
-                logger.error(
-                    "Error communicating with wallet-service on contract deactivation. Response status: ${it.statusCode}"
-                )
+            .doOnError { error ->
+                val reason =
+                    if (error is WebClientResponseException) "HTTP ${error.statusCode.value()}"
+                    else error.javaClass.simpleName
+                logger.warn("Contract deactivation failed for wallet $walletId: $reason")
             }
-            .onErrorMap { WalletServiceException(walletId, it) }
+            .onErrorMap { error -> WalletServiceException(walletId, error) }
     }
 }

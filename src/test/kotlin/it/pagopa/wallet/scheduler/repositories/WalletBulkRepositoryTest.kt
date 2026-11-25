@@ -22,7 +22,8 @@ class WalletBulkRepositoryTest {
     @Test
     fun `should execute bulk updates and return modified count`() {
         // Arrange
-        val walletTtlMap = mapOf("wallet-1" to 3600, "wallet-2" to 7200)
+        val walletIds = listOf("wallet-1", "wallet-2")
+        val ttl = 3600
 
         val mockWriteResult: BulkWriteResult = mock { on { modifiedCount } doReturn 2 }
 
@@ -34,7 +35,7 @@ class WalletBulkRepositoryTest {
         whenever(bulkOperations.execute()).thenReturn(Mono.just(mockWriteResult))
 
         // Act & Assert
-        StepVerifier.create(repository.bulkUpdateTtl(walletTtlMap)).expectNext(2).verifyComplete()
+        StepVerifier.create(repository.bulkUpdateTtl(walletIds, ttl)).expectNext(2).verifyComplete()
 
         argumentCaptor<Query>().apply {
             val updateCaptor = argumentCaptor<Update>()
@@ -50,7 +51,7 @@ class WalletBulkRepositoryTest {
 
             val update1Doc = updates[0].updateObject
             val setDoc1 = update1Doc["\$set"] as org.bson.Document
-            assertEquals(3600, setDoc1["ttl"], "First update should set ttl to 3600")
+            assertEquals(ttl, setDoc1["ttl"], "First update should set ttl to $ttl")
 
             // Asserting Wallet 2
             val query2Doc = queries[1].queryObject
@@ -58,7 +59,7 @@ class WalletBulkRepositoryTest {
 
             val update2Doc = updates[1].updateObject
             val setDoc2 = update2Doc["\$set"] as org.bson.Document
-            assertEquals(7200, setDoc2["ttl"], "Second update should set ttl to 7200")
+            assertEquals(ttl, setDoc2["ttl"], "Second update should set ttl to $ttl")
         }
 
         verify(bulkOperations, times(1)).execute()
