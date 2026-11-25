@@ -100,6 +100,10 @@ If you want to customize the application environment, reference this table:
 (*): for Mongo connection string options
 see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/connection/connection-options/#connection-options)
 
+For lifecycle management, use a fixed-interval cron (like `0 */1 * * * *`), or `-` to disable the job. The startup check measures the gap between
+the next two runs and verifies that each query limit fits at its corresponding deactivation
+delay.
+
 ### Run docker container
 
 ```shell
